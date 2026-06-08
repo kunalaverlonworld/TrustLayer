@@ -94,9 +94,10 @@ function EyeBtn({ show, onToggle }: { show: boolean; onToggle: () => void }) {
 interface LoginPageProps {
   onForgotPassword?: () => void;
   onClose?: () => void;
+  onLoginSuccess?: (user: { name: string; email: string }) => void;
 }
 
-export default function LoginPage({ onForgotPassword, onClose }: LoginPageProps) {
+export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }: LoginPageProps) {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
   const [confirm, setConfirm]           = useState("");
@@ -131,7 +132,12 @@ export default function LoginPage({ onForgotPassword, onClose }: LoginPageProps)
     setLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 1000));
-      // TODO: replace with real API calls
+      if (onLoginSuccess) {
+        onLoginSuccess({
+          name: isSignUp ? name : email.split("@")[0],
+          email,
+        });
+      }
     } catch (err: any) {
       setHasError(true);
       setErrorMessage(err?.message || "Something went wrong");

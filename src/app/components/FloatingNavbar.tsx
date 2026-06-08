@@ -16,9 +16,21 @@ const C = {
 
 interface FloatingNavbarProps {
   onLoginClick?: () => void;
+  currentUser?: { name: string; email: string } | null;
+  currentPlan?: { id: string; name: string; price: string } | null;
+  onLogout?: () => void;
+  onViewDashboard?: () => void;
+  onViewHome?: () => void;
 }
 
-export default function FloatingNavbar({ onLoginClick }: FloatingNavbarProps) {
+export default function FloatingNavbar({
+  onLoginClick,
+  currentUser,
+  currentPlan,
+  onLogout,
+  onViewDashboard,
+  onViewHome,
+}: FloatingNavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -108,35 +120,71 @@ export default function FloatingNavbar({ onLoginClick }: FloatingNavbarProps) {
 
           {/* Right actions */}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} className="nav-desktop">
-            <button
-              onClick={onLoginClick}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14, fontWeight: 600, color: C.navy,
-                padding: '8px 16px', borderRadius: 100,
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = C.teal)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.navy)}
-            >
-              Login
-            </button>
-            <button
-              style={{
-                background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
-                border: 'none', cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14, fontWeight: 700, color: 'white',
-                padding: '9px 22px', borderRadius: 100,
-                boxShadow: '0 4px 14px rgba(0,184,212,0.30)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,184,212,0.40)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,184,212,0.30)'; }}
-            >
-              Get Started
-            </button>
+            {currentUser ? (
+              <>
+                <button
+                  onClick={onViewDashboard}
+                  style={{
+                    background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
+                    border: 'none', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 700, color: 'white',
+                    padding: '9px 22px', borderRadius: 100,
+                    boxShadow: '0 4px 14px rgba(0,184,212,0.30)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,184,212,0.40)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,184,212,0.30)'; }}
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  onClick={onLogout}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 600, color: '#ef4444',
+                    padding: '8px 16px', borderRadius: 100,
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={onLoginClick}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 600, color: C.navy,
+                    padding: '8px 16px', borderRadius: 100,
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = C.teal)}
+                  onMouseLeave={e => (e.currentTarget.style.color = C.navy)}
+                >
+                  Login
+                </button>
+                <button
+                  onClick={onLoginClick}
+                  style={{
+                    background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
+                    border: 'none', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 700, color: 'white',
+                    padding: '9px 22px', borderRadius: 100,
+                    boxShadow: '0 4px 14px rgba(0,184,212,0.30)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,184,212,0.40)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,184,212,0.30)'; }}
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile burger */}
@@ -184,28 +232,61 @@ export default function FloatingNavbar({ onLoginClick }: FloatingNavbarProps) {
                 {link.label}
               </button>
             ))}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-              <button
-                onClick={onLoginClick}
-                style={{
-                  background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14, fontWeight: 600, color: C.navy,
-                  padding: '10px', borderRadius: 100, transition: 'border-color 0.2s',
-                }}
-              >
-                Login
-              </button>
-              <button style={{
-                background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
-                border: 'none', cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14, fontWeight: 700, color: 'white',
-                padding: '10px', borderRadius: 100,
-              }}>
-                Get Started
-              </button>
-            </div>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+               {currentUser ? (
+                 <>
+                   <button
+                     onClick={() => { onViewDashboard?.(); setMobileOpen(false); }}
+                     style={{
+                       background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
+                       border: 'none', cursor: 'pointer',
+                       fontFamily: "'Inter', sans-serif",
+                       fontSize: 14, fontWeight: 700, color: 'white',
+                       padding: '10px', borderRadius: 100,
+                     }}
+                   >
+                     Go to Dashboard
+                   </button>
+                   <button
+                     onClick={() => { onLogout?.(); setMobileOpen(false); }}
+                     style={{
+                       background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
+                       fontFamily: "'Inter', sans-serif",
+                       fontSize: 14, fontWeight: 600, color: '#ef4444',
+                       padding: '10px', borderRadius: 100,
+                     }}
+                   >
+                     Logout
+                   </button>
+                 </>
+               ) : (
+                 <>
+                   <button
+                     onClick={() => { onLoginClick?.(); setMobileOpen(false); }}
+                     style={{
+                       background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
+                       fontFamily: "'Inter', sans-serif",
+                       fontSize: 14, fontWeight: 600, color: C.navy,
+                       padding: '10px', borderRadius: 100,
+                     }}
+                   >
+                     Login
+                   </button>
+                   <button
+                     onClick={() => { onLoginClick?.(); setMobileOpen(false); }}
+                     style={{
+                       background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
+                       border: 'none', cursor: 'pointer',
+                       fontFamily: "'Inter', sans-serif",
+                       fontSize: 14, fontWeight: 700, color: 'white',
+                       padding: '10px', borderRadius: 100,
+                     }}
+                   >
+                     Get Started
+                   </button>
+                 </>
+               )}
+             </div>
           </motion.div>
         )}
       </AnimatePresence>
