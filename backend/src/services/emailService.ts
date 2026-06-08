@@ -3,11 +3,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("RESEND_API_KEY is not defined in environment variables");
-}
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazily resolved — so the module loads without a key in development
+const getResend = (): Resend => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not defined in environment variables");
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 export const sendHrFeedbackEmail = async (
   hrEmail: string,
@@ -24,6 +26,7 @@ export const sendHrFeedbackEmail = async (
     const testOverride = process.env.TEST_RECIPIENT_EMAIL?.trim(); 
     const recipient = testOverride || hrEmail.trim();
 
+    const resend = getResend();
     const response = await resend.emails.send({
       from: "TrustLayer <onboarding@resend.dev>",
       to: recipient,
