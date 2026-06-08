@@ -14,9 +14,6 @@ import { ContactSupport } from './components/ContactSupport';
 import Footer from './components/Footer';
 import './styles.css';
 import LoginPage from './components/LoginPage';
-import PlanSelection from './components/PlanSelection';
-import LMSDashboard from './components/LMSDashboard';
-import { checkActiveLicense } from './services/licenseApi';
 
 function Loader() {
   const wrapRef    = useRef(null);
@@ -50,7 +47,7 @@ function Loader() {
     tl.to(cursorRef.current,    { opacity: 0, duration: 0.3, repeat: 3, yoyo: true }, '+=0.3');
     tl.to(wrapRef.current,      { opacity: 0, duration: 0.7, ease: 'power2.inOut' }, '+=0.2');
 
-    return () => { tl.kill(); };
+    return () => tl.kill();
   }, []);
 
   return (
@@ -143,106 +140,18 @@ export default function App() {
   const [loading, setLoading]     = useState(true);
   const [showContact, setShowContact] = useState(false);
   const [showLogin, setShowLogin]     = useState(false);
-  
-  // LMS Feature and Plan state
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
-  const [currentPlan, setCurrentPlan] = useState<{ id: string; name: string; price: string } | null>(null);
-  const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
-
-  // Check active user session and license status on mount
-  useEffect(() => {
-    const session = localStorage.getItem('user');
-    if (session) {
-      try {
-        const u = JSON.parse(session);
-        setCurrentUser(u);
-        checkUserLicense(u.email);
-      } catch (e) {
-        console.error('Failed to parse session:', e);
-      }
-    }
-  }, []);
-
-  const checkUserLicense = async (email: string) => {
-    const activeLicense = await checkActiveLicense(email);
-    if (activeLicense && activeLicense.status === 'active') {
-      const planName = activeLicense.licenseType?.name || 'Basic';
-      setCurrentPlan({
-        id: planName.toLowerCase(),
-        name: planName,
-        price: '',
-      });
-      setActiveView('dashboard');
-    } else {
-      setCurrentPlan(null);
-      setActiveView('landing');
-    }
-  };
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3200);
     return () => clearTimeout(t);
   }, []);
 
-  const handleLoginSuccess = async (user: { name: string; email: string }) => {
-    setCurrentUser(user);
-    localStorage.setItem('user', JSON.stringify(user));
-    setShowLogin(false);
-    await checkUserLicense(user.email);
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setCurrentPlan(null);
-    setActiveView('landing');
-    localStorage.removeItem('user');
-  };
-
-  // Render Plan Selection screen if logged in but no plan is active
-  if (currentUser && !currentPlan) {
-    return (
-      <>
-        {loading && <Loader />}
-        <PlanSelection
-          userName={currentUser.name}
-          userEmail={currentUser.email}
-          onSelectPlan={(plan) => {
-            setCurrentPlan(plan);
-            setActiveView('dashboard');
-          }}
-          onLogout={handleLogout}
-        />
-      </>
-    );
-  }
-
-  // Render LMS dashboard if user is logged in with plan and has dashboard active
-  if (currentUser && currentPlan && activeView === 'dashboard') {
-    return (
-      <>
-        {loading && <Loader />}
-        <LMSDashboard
-          user={currentUser}
-          plan={currentPlan}
-          onLogout={handleLogout}
-          onUpgradePlan={() => setCurrentPlan(null)}
-        />
-      </>
-    );
-  }
-
   if (showContact) {
     return (
       <>
         {loading && <Loader />}
         <div className="min-h-screen">
-          <FloatingNavbar
-            onLoginClick={() => setShowLogin(true)}
-            currentUser={currentUser}
-            currentPlan={currentPlan}
-            onLogout={handleLogout}
-            onViewDashboard={() => setActiveView('dashboard')}
-          />
+          <FloatingNavbar onLoginClick={() => setShowLogin(true)} />
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
           </div>
@@ -250,7 +159,6 @@ export default function App() {
             <LoginPage
               onClose={() => setShowLogin(false)}
               onForgotPassword={() => setShowLogin(false)}
-              onLoginSuccess={handleLoginSuccess}
             />
           )}
         </div>
@@ -262,19 +170,12 @@ export default function App() {
     <>
       {loading && <Loader />}
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
-        <FloatingNavbar
-          onLoginClick={() => setShowLogin(true)}
-          currentUser={currentUser}
-          currentPlan={currentPlan}
-          onLogout={handleLogout}
-          onViewDashboard={() => setActiveView('dashboard')}
-        />
+        <FloatingNavbar onLoginClick={() => setShowLogin(true)} />
 
         {showLogin && (
           <LoginPage
             onClose={() => setShowLogin(false)}
             onForgotPassword={() => setShowLogin(false)}
-            onLoginSuccess={handleLoginSuccess}
           />
         )}
 

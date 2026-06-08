@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X } from "lucide-react";
-import { syncCustomer, loginCustomer } from "../services/licenseApi";
 
 // ─── Password strength ────────────────────────────────────────────────────────
 
@@ -95,10 +94,9 @@ function EyeBtn({ show, onToggle }: { show: boolean; onToggle: () => void }) {
 interface LoginPageProps {
   onForgotPassword?: () => void;
   onClose?: () => void;
-  onLoginSuccess?: (user: { name: string; email: string }) => void;
 }
 
-export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }: LoginPageProps) {
+export default function LoginPage({ onForgotPassword, onClose }: LoginPageProps) {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
   const [confirm, setConfirm]           = useState("");
@@ -132,20 +130,8 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
     }
     setLoading(true);
     try {
-      if (isSignUp) {
-        // Sync user creation with GeoTrack License System
-        await syncCustomer(name, email, password);
-      }
-      
-      // Perform Customer Login on GeoTrack License System
-      const response = await loginCustomer(email, password);
-      
-      if (onLoginSuccess) {
-        onLoginSuccess({
-          name: response.customer?.fullName || response.customer?.name || (isSignUp ? name : email.split("@")[0]),
-          email,
-        });
-      }
+      await new Promise((r) => setTimeout(r, 1000));
+      // TODO: replace with real API calls
     } catch (err: any) {
       setHasError(true);
       setErrorMessage(err?.message || "Something went wrong");
