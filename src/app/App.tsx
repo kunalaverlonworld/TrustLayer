@@ -16,6 +16,7 @@ import './styles.css';
 import LoginPage from './components/LoginPage';
 import PlanSelection from './components/PlanSelection';
 import LMSDashboard from './components/LMSDashboard';
+import { checkActiveLicense } from './services/licenseApi';
 
 function Loader() {
   const wrapRef    = useRef(null);
@@ -148,23 +149,53 @@ export default function App() {
   const [currentPlan, setCurrentPlan] = useState<{ id: string; name: string; price: string } | null>(null);
   const [activeView, setActiveView] = useState<'landing' | 'dashboard'>('landing');
 
+  // Check active user session and license status on mount
+  useEffect(() => {
+    const session = localStorage.getItem('user');
+    if (session) {
+      try {
+        const u = JSON.parse(session);
+        setCurrentUser(u);
+        checkUserLicense(u.email);
+      } catch (e) {
+        console.error('Failed to parse session:', e);
+      }
+    }
+  }, []);
+
+  const checkUserLicense = async (email: string) => {
+    const activeLicense = await checkActiveLicense(email);
+    if (activeLicense && activeLicense.status === 'active') {
+      const planName = activeLicense.licenseType?.name || 'Basic';
+      setCurrentPlan({
+        id: planName.toLowerCase(),
+        name: planName,
+        price: '',
+      });
+      setActiveView('dashboard');
+    } else {
+      setCurrentPlan(null);
+      setActiveView('landing');
+    }
+  };
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3200);
     return () => clearTimeout(t);
   }, []);
 
-  const handleLoginSuccess = (user: { name: string; email: string }) => {
+  const handleLoginSuccess = async (user: { name: string; email: string }) => {
     setCurrentUser(user);
+    localStorage.setItem('user', JSON.stringify(user));
     setShowLogin(false);
-    if (currentPlan) {
-      setActiveView('dashboard');
-    }
+    await checkUserLicense(user.email);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentPlan(null);
     setActiveView('landing');
+    localStorage.removeItem('user');
   };
 
   // Render Plan Selection screen if logged in but no plan is active
@@ -174,6 +205,7 @@ export default function App() {
         {loading && <Loader />}
         <PlanSelection
           userName={currentUser.name}
+          userEmail={currentUser.email}
           onSelectPlan={(plan) => {
             setCurrentPlan(plan);
             setActiveView('dashboard');

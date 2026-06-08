@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X } from "lucide-react";
+import { syncCustomer, loginCustomer } from "../services/licenseApi";
 
 // ─── Password strength ────────────────────────────────────────────────────────
 
@@ -131,10 +132,17 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
     }
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
+      if (isSignUp) {
+        // Sync user creation with GeoTrack License System
+        await syncCustomer(name, email, password);
+      }
+      
+      // Perform Customer Login on GeoTrack License System
+      const response = await loginCustomer(email, password);
+      
       if (onLoginSuccess) {
         onLoginSuccess({
-          name: isSignUp ? name : email.split("@")[0],
+          name: response.customer?.fullName || response.customer?.name || (isSignUp ? name : email.split("@")[0]),
           email,
         });
       }
