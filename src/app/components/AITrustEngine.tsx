@@ -322,7 +322,7 @@ function EngineCard({
 
 /* ── Card header ── */
 function CardHeader({ icon: Icon, title, subtitle, accentColor, bg, borderColor }: {
-  icon: React.ComponentType<{ size: number; color: string }>;
+  icon: React.ComponentType<any>;
   title: string; subtitle: string;
   accentColor: string; bg: string; borderColor: string;
 }) {

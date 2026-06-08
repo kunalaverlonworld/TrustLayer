@@ -47,7 +47,7 @@ function Loader() {
     tl.to(cursorRef.current,    { opacity: 0, duration: 0.3, repeat: 3, yoyo: true }, '+=0.3');
     tl.to(wrapRef.current,      { opacity: 0, duration: 0.7, ease: 'power2.inOut' }, '+=0.2');
 
-    return () => tl.kill();
+    return () => { tl.kill(); };
   }, []);
 
   return (
