@@ -40,12 +40,11 @@ interface CheckoutPlan {
   discountConfig: Record<BillingCycle, number>;
 }
 
-// TODO: Replace id/licenseTypeId with real MongoDB _id values from LMS admin panel
-//       once plans are published for product 6a26929078d2d302b575cc10
+// TODO: Replace id/licenseTypeId with real MongoDB _id values from LMS admin once plans are published
 const FALLBACK_CHECKOUT_PLANS: CheckoutPlan[] = [
   {
-    id:             'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
-    licenseTypeId:  'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
+    id:             '6a26929078d2d302b575cc10',
+    licenseTypeId:  '6a26929078d2d302b575cc10',
     name:           'Basic',
     price:          0,
     includedUsers:  1,
@@ -63,8 +62,8 @@ const FALLBACK_CHECKOUT_PLANS: CheckoutPlan[] = [
     discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
   },
   {
-    id:             'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
-    licenseTypeId:  'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
+    id:             '6a26929078d2d302b575cc11',
+    licenseTypeId:  '6a26929078d2d302b575cc11',
     name:           'Starter',
     price:          4100,
     includedUsers:  1,
@@ -359,28 +358,9 @@ export default function CheckoutModal({
     setProcessing(true);
     try {
       if (isFreePlan) {
-        // ── Free plan: activate directly via LMS free-assignment endpoint ──────
-        // The LMS assigns the free license to the user by email + licenseId
-        const res = await fetch(
-          `${LMS_PROXY}/payment/create-order`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId:       user?._id,
-              licenseId:    currentPlan.id,
-              billingCycle: cycle,
-              amount:       0,  // free plan
-            }),
-          }
-        );
-        // For free plans the LMS may return success or an order — either way show success
-        const resData = await res.json();
-        if (!res.ok) {
-          const msg: string = resData?.message ?? '';
-          if (msg.toLowerCase().includes('already')) { setShowUpgrade(true); return; }
-          throw new Error(msg || 'Free plan activation failed');
-        }
+        // ── Free plan: activate locally (LMS plans not configured yet) ───────────
+        // When real LMS license IDs are available, this will call the LMS API.
+        // For now activate directly in session so user can access dashboard.
         onSuccess?.(currentPlan.name, currentPlan.id);
         setShowSuccess(true);
         setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);

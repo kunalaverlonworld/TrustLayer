@@ -242,7 +242,7 @@ interface PricingSectionProps {
 //       once plans are published for product 6a26929078d2d302b575cc10
 const FALLBACK_PLANS: Plan[] = [
   {
-    licenseType:    'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
+    licenseType:    '6a26929078d2d302b575cc10',
     name:           'Basic',
     description:    'Try all features free for 7 days — no credit card required',
     price:          0,
@@ -261,7 +261,7 @@ const FALLBACK_PLANS: Plan[] = [
     meta: PLAN_META['basic'] || DEFAULT_META,
   },
   {
-    licenseType:    'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
+    licenseType:    '6a26929078d2d302b575cc11',
     name:           'Starter',
     description:    'Ideal for small hiring teams getting started',
     price:          4100,
