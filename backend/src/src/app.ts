@@ -46,7 +46,8 @@ const whitelist = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
-    "https://trustlayer-by3p.onrender.com"
+    "https://trustlayer-by3p.onrender.com",
+    "https://trustlayer-frontend.onrender.com"
 ];
 app.use(
     cors({
