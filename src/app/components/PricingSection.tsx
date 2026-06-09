@@ -237,50 +237,6 @@ interface PricingSectionProps {
   onPlanSelect?: (planId: string, cycle: BillingCycle) => void;
 }
 
-// ── Fallback plans (shown when LMS returns empty or is unreachable) ─────────
-// TODO: Replace licenseType values with real MongoDB _id from LMS admin panel
-//       once plans are published for product 6a26929078d2d302b575cc10
-const FALLBACK_PLANS: Plan[] = [
-  {
-    licenseType:    '6a26929078d2d302b575cc10',
-    name:           'Basic',
-    description:    'Try all features free for 7 days — no credit card required',
-    price:          0,
-    isFree:         true,
-    isEnterprise:   false,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
-      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support',    uiLabel: 'Email support' },
-      { featureSlug: 'trial',      uiLabel: '7-day free trial' },
-      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard' },
-      { featureSlug: 'api',        uiLabel: 'Standard API access' },
-    ],
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['basic'] || DEFAULT_META,
-  },
-  {
-    licenseType:    '6a26929078d2d302b575cc11',
-    name:           'Starter',
-    description:    'Ideal for small hiring teams getting started',
-    price:          4100,
-    isFree:         false,
-    isEnterprise:   false,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
-      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support',    uiLabel: 'Email support' },
-      { featureSlug: 'retention',  uiLabel: '7-day data retention' },
-      { featureSlug: 'api',        uiLabel: 'Standard API access' },
-      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard with KPI cards' },
-    ],
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['starter'] || DEFAULT_META,
-  },
-];
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function PricingSection({ onContactClick, onPlanSelect }: PricingSectionProps) {
   const [cycle, setCycle]   = useState<BillingCycle>('monthly');
@@ -307,13 +263,16 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
             const meta = PLAN_META[key] ?? DEFAULT_META;
 
             return {
-              licenseType:    lt._id ?? lic._id ?? '',
+              licenseType:    lic._id ?? '',
               name:           name,
               description:    lt.description ?? `Best for ${name} users`,
               price:          lt.price?.amount ?? 0,
               isFree:         (lt.price?.amount ?? 0) === 0,
               isEnterprise:   key === 'enterprise',
-              features:       lt.features ?? [],
+              features:       (lt.features ?? []).map((f: any) => ({
+                featureSlug: f.featureSlug ?? f.featureKey ?? '',
+                uiLabel:     f.uiLabel ?? f.displayName ?? '',
+              })),
               discountConfig: lt.discountConfig ?? {
                 monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20,
               },
@@ -321,21 +280,16 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
             };
           });
 
-        if (mapped.length > 0) {
-          // Sort by PLAN_ORDER
-          mapped.sort((a, b) => {
-            const ak = a.name.toLowerCase();
-            const bk = b.name.toLowerCase();
-            return (PLAN_ORDER[ak] ?? 999) - (PLAN_ORDER[bk] ?? 999);
-          });
-          setPlans(mapped);
-        } else {
-          console.warn('LMS returned no licenses, using high-fidelity fallback plans.');
-          setPlans(FALLBACK_PLANS);
-        }
+        // Sort and set whatever LMS returns (may be empty)
+        mapped.sort((a, b) => {
+          const ak = a.name.toLowerCase();
+          const bk = b.name.toLowerCase();
+          return (PLAN_ORDER[ak] ?? 999) - (PLAN_ORDER[bk] ?? 999);
+        });
+        setPlans(mapped);
       } catch (err: any) {
-        console.error('Failed to load TrustLayer plans from LMS, using fallback plans:', err);
-        setPlans(FALLBACK_PLANS);
+        console.error('[PricingSection] Failed to load plans from LMS:', err);
+        setError('Unable to load plans. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -510,7 +464,25 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
           }}
         >
           {loading
-            ? [...Array(4)].map((_, i) => <SkeletonCard key={i} />)
+            ? [...Array(2)].map((_, i) => <SkeletonCard key={i} />)
+            : plans.length === 0 && !error
+            ? (
+              <div
+                className="col-span-full text-center py-16"
+                style={{ color: C.muted }}
+              >
+                <div style={{
+                  width: 64, height: 64, borderRadius: '50%',
+                  background: 'rgba(0,184,212,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}>
+                  <Sparkles style={{ width: 28, height: 28, color: C.teal }} />
+                </div>
+                <p className="text-base font-semibold mb-1" style={{ color: C.navy }}>Plans coming soon</p>
+                <p className="text-sm">Our pricing plans are being configured. Check back shortly.</p>
+              </div>
+            )
             : plans.map((plan, i) => {
                 const { meta } = plan;
                 const Icon = meta.icon;

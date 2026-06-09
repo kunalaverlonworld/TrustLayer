@@ -40,48 +40,6 @@ interface CheckoutPlan {
   discountConfig: Record<BillingCycle, number>;
 }
 
-// TODO: Replace id/licenseTypeId with real MongoDB _id values from LMS admin once plans are published
-const FALLBACK_CHECKOUT_PLANS: CheckoutPlan[] = [
-  {
-    id:             '6a26929078d2d302b575cc10',
-    licenseTypeId:  '6a26929078d2d302b575cc10',
-    name:           'Basic',
-    price:          0,
-    includedUsers:  1,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
-      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support',    uiLabel: 'Email support' },
-      { featureSlug: 'trial',      uiLabel: '7-day free trial' },
-      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard' },
-      { featureSlug: 'api',        uiLabel: 'Standard API access' },
-    ],
-    popular:        false,
-    isFree:         true,
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-  },
-  {
-    id:             '6a26929078d2d302b575cc11',
-    licenseTypeId:  '6a26929078d2d302b575cc11',
-    name:           'Starter',
-    price:          4100,
-    includedUsers:  1,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
-      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support',    uiLabel: 'Email support' },
-      { featureSlug: 'retention',  uiLabel: '7-day data retention' },
-      { featureSlug: 'api',        uiLabel: 'Standard API access' },
-      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard with KPI cards' },
-    ],
-    popular:        true,
-    isFree:         false,
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-  },
-];
-
 export interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -290,40 +248,66 @@ export default function CheckoutModal({
             return {
               id:             lic._id ?? '',
               licenseTypeId:  lt._id ?? '',
-              name:           name,
+              name,
               price:          lt.price?.amount ?? 0,
               includedUsers:  1,
               features:       feats,
-              popular:        key === 'professional' || key === 'pro',
+              popular:        key === 'professional' || key === 'pro' || key === 'starter',
               isFree:         (lt.price?.amount ?? 0) === 0,
               discountConfig: lt.discountConfig ?? { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
             };
           });
 
-        const finalPlans = mapped.length > 0 ? mapped : FALLBACK_CHECKOUT_PLANS;
-
-        // Sort: free first, enterprise last
+        // Sort: free first, then by order — use whatever LMS returns, no fallback
         const ORDER: Record<string, number> = { free: 1, basic: 1, starter: 2, professional: 3, pro: 3, business: 4, enterprise: 5 };
-        finalPlans.sort((a, b) => (ORDER[a.name.toLowerCase()] ?? 99) - (ORDER[b.name.toLowerCase()] ?? 99));
-        setPlans(finalPlans);
+        mapped.sort((a, b) => (ORDER[a.name.toLowerCase()] ?? 99) - (ORDER[b.name.toLowerCase()] ?? 99));
+        setPlans(mapped);
 
         // Set active plan
-        const match = finalPlans.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
-        setActivePlanId(match?.id ?? finalPlans[0]?.id ?? '');
+        const match = mapped.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
+        setActivePlanId(match?.id ?? mapped[0]?.id ?? '');
       })
       .catch((err) => {
-        console.warn('Failed to fetch licenses from LMS in checkout modal, using fallbacks:', err);
-        setPlans(FALLBACK_CHECKOUT_PLANS);
-        const match = FALLBACK_CHECKOUT_PLANS.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
-        setActivePlanId(match?.id ?? FALLBACK_CHECKOUT_PLANS[0]?.id ?? '');
+        console.error('[CheckoutModal] Failed to fetch plans from LMS:', err);
+        showToast('Failed to load plans. Please try again.', 'error');
       })
       .finally(() => setLoading(false));
   }, [isOpen]);
 
+
   if (!isOpen) return null;
 
   const currentPlan     = plans.find(p => p.id === activePlanId) ?? plans[0];
-  if (!currentPlan && !loading) return null;
+  if (!currentPlan && !loading) return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 300,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(10,31,61,0.55)', backdropFilter: 'blur(8px)',
+      padding: 16, fontFamily: "'Inter', sans-serif",
+    }}>
+      <div style={{
+        background: 'white', borderRadius: 24, padding: '40px 36px',
+        maxWidth: 440, width: '100%', textAlign: 'center',
+        boxShadow: '0 32px 80px rgba(10,31,61,0.22)',
+      }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
+        <h3 style={{ color: C.navy, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>Plans Coming Soon</h3>
+        <p style={{ color: C.body, fontSize: 14, marginBottom: 20 }}>
+          Our pricing plans are being configured. Please check back shortly.
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            padding: '10px 24px', borderRadius: 12, border: 'none',
+            background: C.teal, color: 'white', fontWeight: 700,
+            fontSize: 14, cursor: 'pointer',
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
 
   // ── Price calc ───────────────────────────────────────────────────────────────
   const pricePerUser    = currentPlan?.price ?? 0;
