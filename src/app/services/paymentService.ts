@@ -1,25 +1,16 @@
 // ── Payment & License API service ─────────────────────────────────────────────
 // All calls go through the TrustLayer backend proxy to avoid CORS.
-import { LMS_PROXY } from './config';
+import { LMS_PROXY, BACKEND_URL } from './config';
+import { loadRazorpay } from '../utils/loadRazorpay';
 
-const BASE = LMS_PROXY;
+export { loadRazorpay };  // re-export so existing imports still work
 
-// Razorpay backend base — same backend, different prefix
-const RAZORPAY_BASE = BASE.replace('/api/lms', '/api/razorpay');
+const BASE          = LMS_PROXY;                          // https://...backend/api/lms
+const RAZORPAY_BASE = `${BACKEND_URL}/api/razorpay`;      // https://...backend/api/razorpay
 
-const h = () => ({ 'Content-Type': 'application/json' });
-
-// ── Razorpay script loader ────────────────────────────────────────────────────
-export const loadRazorpay = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) { resolve(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload  = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+function h() {
+  return { 'Content-Type': 'application/json' };
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
