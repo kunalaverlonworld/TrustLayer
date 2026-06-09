@@ -2,7 +2,7 @@
 // All API calls to the LMS auth endpoints
 import { syncPasswordToLMS, getActiveLicense } from './paymentService';
 
-const LMS_BASE   = 'https://lisence-system.onrender.com';
+const LMS_BASE   = 'https://license-system-v6ht.onrender.com';
 const API_KEY    = 'my-secret-key-123';
 const PRODUCT_ID = '6a26929078d2d302b575cc10';
 

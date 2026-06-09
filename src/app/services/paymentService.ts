@@ -1,11 +1,11 @@
 // ── Payment & License API service ─────────────────────────────────────────────
-// Confirmed working endpoints on https://lisence-system.onrender.com :
+// Confirmed working endpoints on https://license-system-v6ht.onrender.com :
 //   POST /api/payment/create-order   { userId, licenseId, billingCycle, amount(paise) }
 //   POST /api/payment/verify         { razorpay_payment_id, razorpay_order_id, razorpay_signature, transactionId? }
-//   GET  /api/external/actve-license/:email?productId=...
+//   GET  /api/external/active-license/:email?productId=...
 //   POST /api/external/customer-password-sync { email, passwordHash }
 
-const BASE    = 'https://lisence-system.onrender.com';
+const BASE    = 'https://license-system-v6ht.onrender.com';
 const API_KEY = 'my-secret-key-123';
 
 // TrustLayer's own secret — tell LMS admin to whitelist this as a webhook/callback secret
@@ -73,7 +73,7 @@ export async function verifyPayment(payload: {
 export async function getActiveLicense(email: string, productId: string) {
   try {
     const res = await fetch(
-      `${BASE}/api/external/actve-license/${encodeURIComponent(email)}?productId=${productId}`,
+      `${BASE}/api/external/active-license/${encodeURIComponent(email)}?productId=${productId}`,
       { headers: { 'x-api-key': API_KEY } }
     );
     if (!res.ok) return null;

@@ -10,7 +10,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 const LMS_PRODUCT_ID = '6a26929078d2d302b575cc10';
 const LMS_API_KEY    = 'my-secret-key-123';
-const LMS_BASE_URL   = 'https://lisence-system.onrender.com/api/license/public/licenses-by-product';
+const LMS_BASE_URL   = 'https://license-system-v6ht.onrender.com/api/license/public/licenses-by-product';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const C = {

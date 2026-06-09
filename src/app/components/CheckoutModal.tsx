@@ -11,7 +11,7 @@ import { loadRazorpay } from '../utils/loadRazorpay';
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PRODUCT_ID = '6a26929078d2d302b575cc10';
 const LMS_API_KEY = 'my-secret-key-123';
-const LMS_BASE   = 'https://lisence-system.onrender.com';
+const LMS_BASE   = 'https://license-system-v6ht.onrender.com';
 
 // ── Brand tokens (matches TrustLayer palette) ─────────────────────────────────
 const C = {
