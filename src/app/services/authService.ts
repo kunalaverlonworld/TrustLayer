@@ -37,12 +37,13 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
   const res = await fetch(`${LMS_BASE}/api/auth/login`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ ...payload, productId: PRODUCT_ID }),
+    // NOTE: productId is NOT accepted by the login endpoint
+    body: JSON.stringify({ email: payload.email, password: payload.password }),
   });
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data?.message || data?.error || 'Invalid credentials');
+    throw new Error(data?.message || data?.error || 'Invalid email or password');
   }
 
   return normaliseUser(data);
@@ -53,15 +54,27 @@ export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
   const res = await fetch(`${LMS_BASE}/api/auth/register`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ ...payload, productId: PRODUCT_ID }),
+    // role='customer' is required; productId is NOT accepted
+    body: JSON.stringify({
+      name:     payload.name,
+      email:    payload.email,
+      password: payload.password,
+      role:     'customer',
+    }),
   });
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data?.message || data?.error || 'Registration failed');
+    // API returns errors as an array e.g. ["Role is required"]
+    const msg = Array.isArray(data?.errors)
+      ? data.errors.join(', ')
+      : (data?.message || data?.error || 'Registration failed');
+    throw new Error(msg);
   }
 
-  return normaliseUser(data);
+  // Register returns { success, message, user } — no token yet, must login
+  // Auto-login to get the token
+  return lmsLogin({ email: payload.email, password: payload.password });
 }
 
 // Normalise whatever shape the LMS returns into AuthUser
