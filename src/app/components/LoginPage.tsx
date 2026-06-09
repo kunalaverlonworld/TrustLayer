@@ -58,24 +58,6 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
     }
   };
 
-  const checkCustomerExists = async (email: string): Promise<boolean> => {
-    try {
-      const res = await fetch(
-        `${LMS_BASE}/api/external/actve-license/${encodeURIComponent(email)}?productId=${PRODUCT_ID}`,
-        { headers: { 'x-api-key': LMS_API_KEY } }
-      );
-      if (res.status === 404) {
-        const data = await res.json();
-        if (data?.message === 'User not found') {
-          return false;
-        }
-      }
-      return true;
-    } catch {
-      return true;
-    }
-  };
-
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasLoginError(false);
@@ -93,27 +75,13 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
       // SIGN IN FLOW
       // ----------------------------
       if (!isSignUp) {
-        // STEP 1: Check if email exists in database
-        const exists = await checkCustomerExists(adminEmail);
-
-        if (!exists) {
-          // Email doesn't exist - redirect to sign up
-          toast.error("Account not found. Please create an account.");
-          setIsSignUp(true);
-          setHasLoginError(true);
-          setErrorMessage("Account not found");
-          setLoading(false);
-          return;
-        }
-
-        // STEP 2: Email exists - now validate password
         try {
           const user = await lmsLogin({
             email: adminEmail,
             password: adminPassword,
           });
 
-          // ✅ CHECK LICENSE STATUS
+          // ✅ CHECK LICENSE STATUS (non-blocking)
           const hasActiveLicense = await checkActiveLicense(adminEmail);
 
           // Store user data from successful login with license status in localStorage
@@ -161,11 +129,10 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
             toast.success("Access your dashboard from the user menu in the top right!");
           }
         } catch (loginError: any) {
-          // Handle password validation errors
           console.error("Login error:", loginError);
           setHasLoginError(true);
           setErrorMessage("Invalid credentials");
-          toast.error("Invalid password");
+          toast.error("Invalid password or email");
           setLoading(false);
           return;
         }
@@ -181,65 +148,72 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
           return;
         }
 
-        // Check if customer already exists
-        const exists = await checkCustomerExists(adminEmail);
-        if (exists) {
-          toast.error("Account already exists. Please sign in.");
+        try {
+          // Create new customer directly
+          const user = await lmsRegister({
+            name,
+            email: adminEmail,
+            password: adminPassword,
+          });
+
+          // ✅ CHECK LICENSE STATUS for new user
+          const hasActiveLicense = await checkActiveLicense(adminEmail);
+
+          // Store user data with license status
+          localStorage.setItem(
+            "user",
+            JSON.stringify({
+              name: name,
+              email: adminEmail,
+              hasActiveLicense: hasActiveLicense,
+            })
+          );
+
+          // Save session
+          saveSession(user);
+
+          // Call parent handlers
+          onSuccess?.(user);
+
+          // Dispatch event to notify Navbar of login status change
+          window.dispatchEvent(new Event('userLoginStatusChanged'));
+
+          // ✅ CLOSE MODAL
+          onClose?.();
+
+          // Reset form
+          setAdminEmail("");
+          setAdminPassword("");
+          setName("");
           setIsSignUp(false);
+
+          toast.success("Account created successfully! Welcome to TrustLayer.");
+
+          // Show pricing prompt for new users
+          setTimeout(() => {
+            toast.info("Get started with a plan to unlock all features!", {
+              action: {
+                label: "View Plans",
+                onClick: () => onNavigateToPricing?.(),
+              },
+              duration: 6000,
+            });
+          }, 500);
+        } catch (err: any) {
+          console.error("Registration error:", err);
+          
+          // If customer already exists, toggle to sign-in mode automatically
+          if (err.message?.includes("User already exists") || err.message?.includes("Conflict") || err.status === 409) {
+            toast.error("Account already exists. Please sign in.");
+            setIsSignUp(false);
+          } else {
+            setHasLoginError(true);
+            setErrorMessage(err.message || "Registration failed");
+            toast.error(err.message || "Registration failed");
+          }
           setLoading(false);
           return;
         }
-
-        // Create new customer
-        const user = await lmsRegister({
-          name,
-          email: adminEmail,
-          password: adminPassword,
-        });
-
-        // ✅ CHECK LICENSE STATUS for new user
-        const hasActiveLicense = await checkActiveLicense(adminEmail);
-
-        // Store user data with license status
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            name: name,
-            email: adminEmail,
-            hasActiveLicense: hasActiveLicense,
-          })
-        );
-
-        // Save session
-        saveSession(user);
-
-        // Call parent handlers
-        onSuccess?.(user);
-
-        // Dispatch event to notify Navbar of login status change
-        window.dispatchEvent(new Event('userLoginStatusChanged'));
-
-        // ✅ CLOSE MODAL
-        onClose?.();
-
-        // Reset form
-        setAdminEmail("");
-        setAdminPassword("");
-        setName("");
-        setIsSignUp(false);
-
-        toast.success("Account created successfully! Welcome to TrustLayer.");
-
-        // Show pricing prompt for new users
-        setTimeout(() => {
-          toast.info("Get started with a plan to unlock all features!", {
-            action: {
-              label: "View Plans",
-              onClick: () => onNavigateToPricing?.(),
-            },
-            duration: 6000,
-          });
-        }, 500);
       }
 
     } catch (err: any) {
@@ -247,7 +221,6 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
       setHasLoginError(true);
       setErrorMessage("Something went wrong");
       toast.error(err.message || "Something went wrong");
-    } finally {
       setLoading(false);
     }
   };
