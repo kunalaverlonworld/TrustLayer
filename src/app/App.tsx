@@ -14,7 +14,7 @@ import { ContactSupport } from './components/ContactSupport';
 import Footer from './components/Footer';
 import './styles.css';
 import LoginPage from './components/LoginPage';
-import { loadSession, saveSession, clearSession, type AuthUser } from './services/authService';
+import { loadSession, saveSession, clearSession, triggerSSORedirect, type AuthUser } from './services/authService';
 import CheckoutModal from './components/CheckoutModal';
 import { Toaster } from './components/ui/sonner';
 
@@ -262,7 +262,15 @@ export default function App() {
         <div className="min-h-screen">
            <FloatingNavbar
             onLoginClick={() => setShowLogin(true)}
-            onDashboardClick={() => window.open('https://trustlayer-backend-d3as.onrender.com/dashboard', '_blank')}
+            onDashboardClick={async () => {
+              if (user) {
+                try {
+                  await triggerSSORedirect(user);
+                } catch (err) {
+                  console.error('SSO failed', err);
+                }
+              }
+            }}
           />
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
@@ -286,7 +294,15 @@ export default function App() {
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
         <FloatingNavbar
           onLoginClick={() => setShowLogin(true)}
-          onDashboardClick={() => window.open('https://trustlayer-backend-d3as.onrender.com/dashboard', '_blank')}
+          onDashboardClick={async () => {
+            if (user) {
+              try {
+                await triggerSSORedirect(user);
+              } catch (err) {
+                console.error('SSO failed', err);
+              }
+            }
+          }}
         />
 
         {showLogin && (

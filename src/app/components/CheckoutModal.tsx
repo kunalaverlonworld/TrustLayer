@@ -4,7 +4,7 @@ import {
   Zap, ArrowRight, ShieldCheck, Building2, Phone,
   MapPin, Hash, ChevronDown,
 } from 'lucide-react';
-import { loadSession } from '../services/authService';
+import { loadSession, triggerSSORedirect } from '../services/authService';
 import { createOrder, verifyPayment, getActiveLicense } from '../services/paymentService';
 import { loadRazorpay } from '../utils/loadRazorpay';
 import { PRODUCT_ID, LMS_PROXY } from '../services/config';
@@ -895,7 +895,17 @@ export default function CheckoutModal({
               style={{ flex: 1, padding: '12px', borderRadius: 12, border: `1.5px solid ${C.border}`, background: '#f8fbff', color: C.body, fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
               Close
             </button>
-            <button onClick={() => { setShowAlreadyActive(false); onClose(); }}
+            <button onClick={async () => {
+              setShowAlreadyActive(false);
+              onClose();
+              if (user) {
+                try {
+                  await triggerSSORedirect(user);
+                } catch (err) {
+                  console.error('SSO failed', err);
+                }
+              }
+            }}
               style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${C.teal},${C.tealDark})`, color: 'white', fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,184,212,0.30)' }}>
               Go to Dashboard
             </button>

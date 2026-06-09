@@ -1,7 +1,7 @@
 // ─── LMS Auth Service ─────────────────────────────────────────────────────────
 // All API calls go through the TrustLayer backend proxy (/api/lms/*)
 // to avoid CORS issues with calling the LMS directly from the browser.
-import { LMS_PROXY, PRODUCT_ID } from './config';
+import { LMS_PROXY, PRODUCT_ID, BACKEND_URL, getDashboardUrl } from './config';
 
 export interface AuthUser {
   _id: string;
@@ -117,4 +117,31 @@ export function loadSession(): AuthUser | null {
 
 export function clearSession() {
   sessionStorage.removeItem(STORAGE_KEY);
+}
+
+// ── SSO Redirect to Dashboard ──────────────────────────────────────────────────
+export async function triggerSSORedirect(user: AuthUser): Promise<void> {
+  const activePlan = user.activeLicense?.planName ?? 'basic';
+  const licenseId = user.activeLicense?.licenseType ?? '';
+
+  const response = await fetch(`${BACKEND_URL}/api/auth/sso`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: user.email,
+      name: user.name,
+      planName: activePlan,
+      licenseId: licenseId,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('SSO initiation failed');
+  }
+
+  const data = await response.json();
+  const dashboardUrl = getDashboardUrl();
+
+  const ssoUrl = `${dashboardUrl}/sso?token=${encodeURIComponent(data.token)}&plan=${encodeURIComponent(data.planName)}&licenseId=${encodeURIComponent(data.licenseId)}`;
+  window.open(ssoUrl, '_blank');
 }
