@@ -1,7 +1,7 @@
 // ── Payment & License API service ─────────────────────────────────────────────
 // All calls go through the TrustLayer backend proxy to avoid CORS.
 import { LMS_PROXY, BACKEND_URL } from './config';
-import { loadRazorpay } from '../utils/loadRazorpay';
+import { loadRazorpay } from '../utils/loadRozerpay';
 
 export { loadRazorpay };  // re-export so existing imports still work
 

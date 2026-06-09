@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { loadSession, triggerSSORedirect } from '../services/authService';
 import { createOrder, verifyPayment, getActiveLicense } from '../services/paymentService';
-import { loadRazorpay } from '../utils/loadRazorpay';
+import { loadRazorpay } from '../utils/loadRozerpay';
 import { PRODUCT_ID, LMS_PROXY } from '../services/config';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
