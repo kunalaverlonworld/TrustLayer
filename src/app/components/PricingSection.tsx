@@ -333,7 +333,7 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
       activeLicense.planName.toLowerCase() === plan.name.toLowerCase()
     );
     if (isCurrentPlan) {
-      alert("This plan is already active on your account.");
+      alert("You already use this plan");
       return;
     }
 
@@ -626,14 +626,13 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
                       {/* CTA button */}
                       <button
                         onClick={() => handleCTA(plan)}
-                        disabled={!!isCurrentPlan}
                         className="w-full py-2.5 rounded-xl text-sm font-bold mb-6 transition-all duration-200 flex items-center justify-center gap-1.5"
                         style={{
                           background: isCurrentPlan ? '#cbd5e1' : meta.ctaBg,
                           color: isCurrentPlan ? '#64748b' : meta.ctaText,
                           fontFamily: "'Inter', sans-serif",
                           border: 'none',
-                          cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
+                          cursor: 'pointer',
                           opacity: isCurrentPlan ? 0.8 : 1,
                         }}
                       >

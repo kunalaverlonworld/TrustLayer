@@ -330,6 +330,12 @@ export default function CheckoutModal({
       showToast('Please fill in all required billing fields.', 'warn'); return;
     }
 
+    // Already on this plan → alert validation
+    if (existingLicenseName && currentPlan && existingLicenseName.toLowerCase() === currentPlan.name.toLowerCase()) {
+      alert("You already use this plan");
+      return;
+    }
+
     // Already on free plan, trying free again → show upgrade
     if (existingLicenseName && existingIsFreePlan && isFreePlan) {
       setShowUpgrade(true); return;
