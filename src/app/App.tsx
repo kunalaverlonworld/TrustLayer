@@ -146,15 +146,44 @@ export default function App() {
   const [showContact, setShowContact] = useState(false);
   const [showLogin, setShowLogin]     = useState(false);
 
-  // Auth state — restored from sessionStorage on mount
-  const [user, setUser] = useState<AuthUser | null>(() => loadSession());
+  // ── Auth state ────────────────────────────────────────────────────────────
+  // Priority: sessionStorage (full AuthUser) → localStorage (navbar-stored user)
+  // This ensures that if the user is shown as logged in in the navbar,
+  // App.tsx also treats them as logged in (so plan clicks go straight to checkout)
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    // 1. Try sessionStorage first (has full AuthUser with activeLicense)
+    const session = loadSession();
+    if (session) return session;
+
+    // 2. Fall back to localStorage (written by FloatingNavbar / LoginPage)
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const lsUser = JSON.parse(raw);
+        // Reconstruct a minimal AuthUser from localStorage data
+        const authUser: AuthUser = {
+          _id:           lsUser.customerId || '',
+          name:          lsUser.name || '',
+          email:         lsUser.email || '',
+          token:         '',
+          activeLicense: null,
+        };
+        // Persist to sessionStorage so future calls to loadSession() work
+        saveSession(authUser);
+        return authUser;
+      }
+    } catch {}
+    return null;
+  });
 
   useEffect(() => {
     const handleLogin = () => {
-      setUser(loadSession());
+      const updated = loadSession();
+      if (updated) setUser(updated);
     };
     const handleLogoutEvent = () => {
       clearSession();
+      localStorage.removeItem('user');
       setUser(null);
     };
     window.addEventListener('userLoggedIn', handleLogin);
