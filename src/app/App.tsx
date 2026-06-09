@@ -16,6 +16,7 @@ import './styles.css';
 import LoginPage from './components/LoginPage';
 import { loadSession, saveSession, clearSession, type AuthUser } from './services/authService';
 import CheckoutModal from './components/CheckoutModal';
+import { Toaster } from './components/ui/sonner';
 
 // ── Loader ────────────────────────────────────────────────────────────────────
 function Loader() {
@@ -194,6 +195,7 @@ export default function App() {
     return (
       <>
         {loading && <Loader />}
+        <Toaster />
         <div className="min-h-screen">
           <FloatingNavbar
             onLoginClick={() => setShowLogin(true)}
@@ -208,6 +210,14 @@ export default function App() {
               onClose={() => setShowLogin(false)}
               onForgotPassword={() => setShowLogin(false)}
               onSuccess={handleLoginSuccess}
+              onNavigateToPricing={() => {
+                setShowLogin(false);
+                setShowContact(false);
+                setTimeout(() => {
+                  const el = document.getElementById('pricing');
+                  if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+                }, 100);
+              }}
             />
           )}
         </div>
@@ -218,6 +228,7 @@ export default function App() {
   return (
     <>
       {loading && <Loader />}
+      <Toaster />
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
         <FloatingNavbar
           onLoginClick={() => setShowLogin(true)}
@@ -230,6 +241,13 @@ export default function App() {
             onClose={() => setShowLogin(false)}
             onForgotPassword={() => setShowLogin(false)}
             onSuccess={handleLoginSuccess}
+            onNavigateToPricing={() => {
+              setShowLogin(false);
+              setTimeout(() => {
+                const el = document.getElementById('pricing');
+                if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+              }, 100);
+            }}
           />
         )}
 
