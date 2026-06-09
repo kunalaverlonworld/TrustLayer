@@ -239,6 +239,104 @@ interface PricingSectionProps {
   onPlanSelect?: (planId: string, cycle: BillingCycle) => void;
 }
 
+const FALLBACK_PLANS: Plan[] = [
+  {
+    licenseType:    '6a26929078d2d302b575cc10-free',
+    name:           'Basic',
+    description:    'Try all features free for 7 days — no credit card required',
+    price:          0,
+    isFree:         true,
+    isEnterprise:   false,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Email support' },
+      { featureSlug: 'trial', uiLabel: '7-day free trial' },
+      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard', uiLabel: 'Core dashboard' },
+      { featureSlug: 'api', uiLabel: 'Standard API access' }
+    ],
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+    meta: PLAN_META['free'] || DEFAULT_META,
+  },
+  {
+    licenseType:    '6a26929078d2d302b575cc10-starter',
+    name:           'Starter',
+    description:    'Ideal for small hiring teams getting started',
+    price:          4100,
+    isFree:         false,
+    isEnterprise:   false,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Email support' },
+      { featureSlug: 'retention', uiLabel: '7-day data retention' },
+      { featureSlug: 'api', uiLabel: 'Standard API access' },
+      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard', uiLabel: 'Core dashboard with KPI cards' }
+    ],
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+    meta: PLAN_META['starter'] || DEFAULT_META,
+  },
+  {
+    licenseType:    '6a26929078d2d302b575cc10-pro',
+    name:           'Professional',
+    description:    'For growing teams that need deeper pipeline control',
+    price:          12500,
+    isFree:         false,
+    isEnterprise:   false,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 1,000 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Advanced AI trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Priority support (email + chat)' },
+      { featureSlug: 'retention', uiLabel: '90-day data retention' },
+      { featureSlug: 'api', uiLabel: 'Full API access' },
+      { featureSlug: 'workspaces', uiLabel: 'Multiple team workspaces' },
+      { featureSlug: 'integrations', uiLabel: 'Custom integrations' },
+      { featureSlug: 'analytics', uiLabel: 'Advanced analytics dashboard' },
+      { featureSlug: 'alerts', uiLabel: 'Ghosting prediction alerts' }
+    ],
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+    meta: PLAN_META['professional'] || PLAN_META['pro'] || DEFAULT_META,
+  },
+  {
+    licenseType:    '6a26929078d2d302b575cc10-business',
+    name:           'Business',
+    description:    'Comprehensive hiring ops for scaling organisations',
+    price:          29200,
+    isFree:         false,
+    isEnterprise:   false,
+    features: [
+      { featureSlug: 'pro', uiLabel: 'Everything in Professional' },
+      { featureSlug: 'workspaces', uiLabel: 'Unlimited workspaces & sub-teams' },
+      { featureSlug: 'tuning', uiLabel: 'Custom AI model fine-tuning' },
+      { featureSlug: 'verification', uiLabel: 'Background verification stage' },
+      { featureSlug: 'permissions', uiLabel: 'Advanced role permissions' },
+      { featureSlug: 'retention', uiLabel: 'Unlimited data retention' }
+    ],
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+    meta: PLAN_META['business'] || DEFAULT_META,
+  },
+  {
+    licenseType:    '6a26929078d2d302b575cc10-enterprise',
+    name:           'Enterprise',
+    description:    'Starting from ₹5/user/day · 100+ users',
+    price:          0,
+    isFree:         false,
+    isEnterprise:   true,
+    features: [
+      { featureSlug: 'business', uiLabel: 'Everything in Business' },
+      { featureSlug: 'candidates', uiLabel: 'Unlimited candidates tracked' },
+      { featureSlug: 'sso', uiLabel: 'SSO & SAML authentication' },
+      { featureSlug: 'whitelabel', uiLabel: 'White-label branding options' },
+      { featureSlug: 'sla', uiLabel: 'SLA-backed uptime guarantee' },
+      { featureSlug: 'support', uiLabel: '24/7 dedicated enterprise support' }
+    ],
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+    meta: PLAN_META['enterprise'] || DEFAULT_META,
+  }
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function PricingSection({ onContactClick, onPlanSelect }: PricingSectionProps) {
   const [cycle, setCycle]   = useState<BillingCycle>('monthly');
@@ -252,43 +350,48 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${LMS_BASE_URL}/${LMS_PRODUCT_ID}`, {
-          headers: { 'x-api-key': LMS_API_KEY },
-        });
+        const res = await fetch(`${LMS_BASE_URL}/${LMS_PRODUCT_ID}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        const mapped: Plan[] = (data.licenses ?? []).map((lic: any) => {
-          const lt  = lic.licenseType;
-          const key = lt.name.toLowerCase();
-          const meta = PLAN_META[key] ?? DEFAULT_META;
+        const mapped: Plan[] = (data.licenses ?? [])
+          .filter((lic: any) => lic && lic.licenseType)
+          .map((lic: any) => {
+            const lt  = lic.licenseType;
+            const name = lt.name ?? 'Unnamed Plan';
+            const key = name.toLowerCase();
+            const meta = PLAN_META[key] ?? DEFAULT_META;
 
-          return {
-            licenseType:    lt._id,
-            name:           lt.name,
-            description:    lt.description ?? `Best for ${lt.name} users`,
-            price:          lt.price?.amount ?? 0,
-            isFree:         (lt.price?.amount ?? 0) === 0,
-            isEnterprise:   key === 'enterprise',
-            features:       lt.features ?? [],
-            discountConfig: lt.discountConfig ?? {
-              monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20,
-            },
-            meta,
-          };
-        });
+            return {
+              licenseType:    lt._id ?? lic._id ?? '',
+              name:           name,
+              description:    lt.description ?? `Best for ${name} users`,
+              price:          lt.price?.amount ?? 0,
+              isFree:         (lt.price?.amount ?? 0) === 0,
+              isEnterprise:   key === 'enterprise',
+              features:       lt.features ?? [],
+              discountConfig: lt.discountConfig ?? {
+                monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20,
+              },
+              meta,
+            };
+          });
 
-        // Sort by PLAN_ORDER
-        mapped.sort((a, b) => {
-          const ak = a.name.toLowerCase();
-          const bk = b.name.toLowerCase();
-          return (PLAN_ORDER[ak] ?? 999) - (PLAN_ORDER[bk] ?? 999);
-        });
-
-        setPlans(mapped);
+        if (mapped.length > 0) {
+          // Sort by PLAN_ORDER
+          mapped.sort((a, b) => {
+            const ak = a.name.toLowerCase();
+            const bk = b.name.toLowerCase();
+            return (PLAN_ORDER[ak] ?? 999) - (PLAN_ORDER[bk] ?? 999);
+          });
+          setPlans(mapped);
+        } else {
+          console.warn('LMS returned no licenses, using high-fidelity fallback plans.');
+          setPlans(FALLBACK_PLANS);
+        }
       } catch (err: any) {
-        console.error('Failed to load TrustLayer plans:', err);
-        setError('Unable to load pricing. Please try again later.');
+        console.error('Failed to load TrustLayer plans from LMS, using fallback plans:', err);
+        setPlans(FALLBACK_PLANS);
       } finally {
         setLoading(false);
       }

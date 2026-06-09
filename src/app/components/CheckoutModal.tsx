@@ -41,6 +41,86 @@ interface CheckoutPlan {
   discountConfig: Record<BillingCycle, number>;
 }
 
+const FALLBACK_CHECKOUT_PLANS: CheckoutPlan[] = [
+  {
+    id:             '6a26929078d2d302b575cc10-free',
+    licenseTypeId:  '6a26929078d2d302b575cc10-free',
+    name:           'Basic',
+    price:          0,
+    includedUsers:  1,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Email support' },
+      { featureSlug: 'trial', uiLabel: '7-day free trial' },
+      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard', uiLabel: 'Core dashboard' },
+      { featureSlug: 'api', uiLabel: 'Standard API access' }
+    ],
+    popular:        false,
+    isFree:         true,
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+  },
+  {
+    id:             '6a26929078d2d302b575cc10-starter',
+    licenseTypeId:  '6a26929078d2d302b575cc10-starter',
+    name:           'Starter',
+    price:          4100,
+    includedUsers:  1,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Email support' },
+      { featureSlug: 'retention', uiLabel: '7-day data retention' },
+      { featureSlug: 'api', uiLabel: 'Standard API access' },
+      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard', uiLabel: 'Core dashboard with KPI cards' }
+    ],
+    popular:        false,
+    isFree:         false,
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+  },
+  {
+    id:             '6a26929078d2d302b575cc10-pro',
+    licenseTypeId:  '6a26929078d2d302b575cc10-pro',
+    name:           'Professional',
+    price:          12500,
+    includedUsers:  1,
+    features: [
+      { featureSlug: 'candidates', uiLabel: 'Up to 1,000 candidates tracked' },
+      { featureSlug: 'scoring', uiLabel: 'Advanced AI trust scoring' },
+      { featureSlug: 'support', uiLabel: 'Priority support (email + chat)' },
+      { featureSlug: 'retention', uiLabel: '90-day data retention' },
+      { featureSlug: 'api', uiLabel: 'Full API access' },
+      { featureSlug: 'workspaces', uiLabel: 'Multiple team workspaces' },
+      { featureSlug: 'integrations', uiLabel: 'Custom integrations' },
+      { featureSlug: 'analytics', uiLabel: 'Advanced analytics dashboard' },
+      { featureSlug: 'alerts', uiLabel: 'Ghosting prediction alerts' }
+    ],
+    popular:        true,
+    isFree:         false,
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+  },
+  {
+    id:             '6a26929078d2d302b575cc10-business',
+    licenseTypeId:  '6a26929078d2d302b575cc10-business',
+    name:           'Business',
+    price:          29200,
+    includedUsers:  1,
+    features: [
+      { featureSlug: 'pro', uiLabel: 'Everything in Professional' },
+      { featureSlug: 'workspaces', uiLabel: 'Unlimited workspaces & sub-teams' },
+      { featureSlug: 'tuning', uiLabel: 'Custom AI model fine-tuning' },
+      { featureSlug: 'verification', uiLabel: 'Background verification stage' },
+      { featureSlug: 'permissions', uiLabel: 'Advanced role permissions' },
+      { featureSlug: 'retention', uiLabel: 'Unlimited data retention' }
+    ],
+    popular:        false,
+    isFree:         false,
+    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+  }
+];
+
 export interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -230,40 +310,52 @@ export default function CheckoutModal({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch(`${LMS_BASE}/api/license/public/licenses-by-product/${PRODUCT_ID}`, {
-      headers: { 'x-api-key': LMS_API_KEY },
-    })
-      .then(r => r.json())
+    fetch(`${LMS_BASE}/api/license/public/licenses-by-product/${PRODUCT_ID}`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
-        const mapped: CheckoutPlan[] = (data.licenses ?? []).map((lic: any) => {
-          const lt   = lic.licenseType;
-          const key  = lt.name?.toLowerCase() ?? '';
-          const feats: { featureSlug: string; uiLabel: string }[] = (lt.features ?? []).map((f: any) => ({
-            featureSlug: f.featureSlug ?? f.featureKey ?? '',
-            uiLabel:     f.uiLabel ?? f.displayName ?? '',
-          }));
-          return {
-            id:             lic._id,
-            licenseTypeId:  lt._id,
-            name:           lt.name,
-            price:          lt.price?.amount ?? 0,
-            includedUsers:  1,
-            features:       feats,
-            popular:        key === 'professional' || key === 'pro',
-            isFree:         (lt.price?.amount ?? 0) === 0,
-            discountConfig: lt.discountConfig ?? { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-          };
-        });
+        const mapped: CheckoutPlan[] = (data.licenses ?? [])
+          .filter((lic: any) => lic && lic.licenseType)
+          .map((lic: any) => {
+            const lt   = lic.licenseType;
+            const name = lt.name ?? 'Unnamed Plan';
+            const key  = name.toLowerCase();
+            const feats: { featureSlug: string; uiLabel: string }[] = (lt.features ?? []).map((f: any) => ({
+              featureSlug: f.featureSlug ?? f.featureKey ?? '',
+              uiLabel:     f.uiLabel ?? f.displayName ?? '',
+            }));
+            return {
+              id:             lic._id ?? '',
+              licenseTypeId:  lt._id ?? '',
+              name:           name,
+              price:          lt.price?.amount ?? 0,
+              includedUsers:  1,
+              features:       feats,
+              popular:        key === 'professional' || key === 'pro',
+              isFree:         (lt.price?.amount ?? 0) === 0,
+              discountConfig: lt.discountConfig ?? { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
+            };
+          });
+
+        const finalPlans = mapped.length > 0 ? mapped : FALLBACK_CHECKOUT_PLANS;
+
         // Sort: free first, enterprise last
         const ORDER: Record<string, number> = { free: 1, basic: 1, starter: 2, professional: 3, pro: 3, business: 4, enterprise: 5 };
-        mapped.sort((a, b) => (ORDER[a.name.toLowerCase()] ?? 99) - (ORDER[b.name.toLowerCase()] ?? 99));
-        setPlans(mapped);
+        finalPlans.sort((a, b) => (ORDER[a.name.toLowerCase()] ?? 99) - (ORDER[b.name.toLowerCase()] ?? 99));
+        setPlans(finalPlans);
 
         // Set active plan
-        const match = mapped.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
-        setActivePlanId(match?.id ?? mapped[0]?.id ?? '');
+        const match = finalPlans.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
+        setActivePlanId(match?.id ?? finalPlans[0]?.id ?? '');
       })
-      .catch(() => showToast('Failed to load plans. Please try again.'))
+      .catch((err) => {
+        console.warn('Failed to fetch licenses from LMS in checkout modal, using fallbacks:', err);
+        setPlans(FALLBACK_CHECKOUT_PLANS);
+        const match = FALLBACK_CHECKOUT_PLANS.find(p => p.id === preselectedPlanId || p.licenseTypeId === preselectedPlanId);
+        setActivePlanId(match?.id ?? FALLBACK_CHECKOUT_PLANS[0]?.id ?? '');
+      })
       .finally(() => setLoading(false));
   }, [isOpen]);
 
