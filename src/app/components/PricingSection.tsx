@@ -237,9 +237,12 @@ interface PricingSectionProps {
   onPlanSelect?: (planId: string, cycle: BillingCycle) => void;
 }
 
+// ── Fallback plans (shown when LMS returns empty or is unreachable) ─────────
+// TODO: Replace licenseType values with real MongoDB _id from LMS admin panel
+//       once plans are published for product 6a26929078d2d302b575cc10
 const FALLBACK_PLANS: Plan[] = [
   {
-    licenseType:    '6a26929078d2d302b575cc10-free',
+    licenseType:    'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
     name:           'Basic',
     description:    'Try all features free for 7 days — no credit card required',
     price:          0,
@@ -247,18 +250,18 @@ const FALLBACK_PLANS: Plan[] = [
     isEnterprise:   false,
     features: [
       { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Email support' },
-      { featureSlug: 'trial', uiLabel: '7-day free trial' },
-      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard', uiLabel: 'Core dashboard' },
-      { featureSlug: 'api', uiLabel: 'Standard API access' }
+      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support',    uiLabel: 'Email support' },
+      { featureSlug: 'trial',      uiLabel: '7-day free trial' },
+      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard' },
+      { featureSlug: 'api',        uiLabel: 'Standard API access' },
     ],
     discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['free'] || DEFAULT_META,
+    meta: PLAN_META['basic'] || DEFAULT_META,
   },
   {
-    licenseType:    '6a26929078d2d302b575cc10-starter',
+    licenseType:    'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
     name:           'Starter',
     description:    'Ideal for small hiring teams getting started',
     price:          4100,
@@ -266,73 +269,16 @@ const FALLBACK_PLANS: Plan[] = [
     isEnterprise:   false,
     features: [
       { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Email support' },
-      { featureSlug: 'retention', uiLabel: '7-day data retention' },
-      { featureSlug: 'api', uiLabel: 'Standard API access' },
-      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard', uiLabel: 'Core dashboard with KPI cards' }
+      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support',    uiLabel: 'Email support' },
+      { featureSlug: 'retention',  uiLabel: '7-day data retention' },
+      { featureSlug: 'api',        uiLabel: 'Standard API access' },
+      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard with KPI cards' },
     ],
     discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
     meta: PLAN_META['starter'] || DEFAULT_META,
   },
-  {
-    licenseType:    '6a26929078d2d302b575cc10-pro',
-    name:           'Professional',
-    description:    'For growing teams that need deeper pipeline control',
-    price:          12500,
-    isFree:         false,
-    isEnterprise:   false,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 1,000 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Advanced AI trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Priority support (email + chat)' },
-      { featureSlug: 'retention', uiLabel: '90-day data retention' },
-      { featureSlug: 'api', uiLabel: 'Full API access' },
-      { featureSlug: 'workspaces', uiLabel: 'Multiple team workspaces' },
-      { featureSlug: 'integrations', uiLabel: 'Custom integrations' },
-      { featureSlug: 'analytics', uiLabel: 'Advanced analytics dashboard' },
-      { featureSlug: 'alerts', uiLabel: 'Ghosting prediction alerts' }
-    ],
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['professional'] || PLAN_META['pro'] || DEFAULT_META,
-  },
-  {
-    licenseType:    '6a26929078d2d302b575cc10-business',
-    name:           'Business',
-    description:    'Comprehensive hiring ops for scaling organisations',
-    price:          29200,
-    isFree:         false,
-    isEnterprise:   false,
-    features: [
-      { featureSlug: 'pro', uiLabel: 'Everything in Professional' },
-      { featureSlug: 'workspaces', uiLabel: 'Unlimited workspaces & sub-teams' },
-      { featureSlug: 'tuning', uiLabel: 'Custom AI model fine-tuning' },
-      { featureSlug: 'verification', uiLabel: 'Background verification stage' },
-      { featureSlug: 'permissions', uiLabel: 'Advanced role permissions' },
-      { featureSlug: 'retention', uiLabel: 'Unlimited data retention' }
-    ],
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['business'] || DEFAULT_META,
-  },
-  {
-    licenseType:    '6a26929078d2d302b575cc10-enterprise',
-    name:           'Enterprise',
-    description:    'Starting from ₹5/user/day · 100+ users',
-    price:          0,
-    isFree:         false,
-    isEnterprise:   true,
-    features: [
-      { featureSlug: 'business', uiLabel: 'Everything in Business' },
-      { featureSlug: 'candidates', uiLabel: 'Unlimited candidates tracked' },
-      { featureSlug: 'sso', uiLabel: 'SSO & SAML authentication' },
-      { featureSlug: 'whitelabel', uiLabel: 'White-label branding options' },
-      { featureSlug: 'sla', uiLabel: 'SLA-backed uptime guarantee' },
-      { featureSlug: 'support', uiLabel: '24/7 dedicated enterprise support' }
-    ],
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-    meta: PLAN_META['enterprise'] || DEFAULT_META,
-  }
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────

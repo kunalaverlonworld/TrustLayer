@@ -40,84 +40,47 @@ interface CheckoutPlan {
   discountConfig: Record<BillingCycle, number>;
 }
 
+// TODO: Replace id/licenseTypeId with real MongoDB _id values from LMS admin panel
+//       once plans are published for product 6a26929078d2d302b575cc10
 const FALLBACK_CHECKOUT_PLANS: CheckoutPlan[] = [
   {
-    id:             '6a26929078d2d302b575cc10-free',
-    licenseTypeId:  '6a26929078d2d302b575cc10-free',
+    id:             'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
+    licenseTypeId:  'REPLACE_WITH_REAL_BASIC_LICENSE_ID',
     name:           'Basic',
     price:          0,
     includedUsers:  1,
     features: [
       { featureSlug: 'candidates', uiLabel: 'Up to 5 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Email support' },
-      { featureSlug: 'trial', uiLabel: '7-day free trial' },
-      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard', uiLabel: 'Core dashboard' },
-      { featureSlug: 'api', uiLabel: 'Standard API access' }
+      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support',    uiLabel: 'Email support' },
+      { featureSlug: 'trial',      uiLabel: '7-day free trial' },
+      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard' },
+      { featureSlug: 'api',        uiLabel: 'Standard API access' },
     ],
     popular:        false,
     isFree:         true,
     discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
   },
   {
-    id:             '6a26929078d2d302b575cc10-starter',
-    licenseTypeId:  '6a26929078d2d302b575cc10-starter',
+    id:             'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
+    licenseTypeId:  'REPLACE_WITH_REAL_STARTER_LICENSE_ID',
     name:           'Starter',
     price:          4100,
     includedUsers:  1,
     features: [
       { featureSlug: 'candidates', uiLabel: 'Up to 100 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Basic trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Email support' },
-      { featureSlug: 'retention', uiLabel: '7-day data retention' },
-      { featureSlug: 'api', uiLabel: 'Standard API access' },
-      { featureSlug: 'workspace', uiLabel: 'Single team workspace' },
-      { featureSlug: 'dashboard', uiLabel: 'Core dashboard with KPI cards' }
-    ],
-    popular:        false,
-    isFree:         false,
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-  },
-  {
-    id:             '6a26929078d2d302b575cc10-pro',
-    licenseTypeId:  '6a26929078d2d302b575cc10-pro',
-    name:           'Professional',
-    price:          12500,
-    includedUsers:  1,
-    features: [
-      { featureSlug: 'candidates', uiLabel: 'Up to 1,000 candidates tracked' },
-      { featureSlug: 'scoring', uiLabel: 'Advanced AI trust scoring' },
-      { featureSlug: 'support', uiLabel: 'Priority support (email + chat)' },
-      { featureSlug: 'retention', uiLabel: '90-day data retention' },
-      { featureSlug: 'api', uiLabel: 'Full API access' },
-      { featureSlug: 'workspaces', uiLabel: 'Multiple team workspaces' },
-      { featureSlug: 'integrations', uiLabel: 'Custom integrations' },
-      { featureSlug: 'analytics', uiLabel: 'Advanced analytics dashboard' },
-      { featureSlug: 'alerts', uiLabel: 'Ghosting prediction alerts' }
+      { featureSlug: 'scoring',    uiLabel: 'Basic trust scoring' },
+      { featureSlug: 'support',    uiLabel: 'Email support' },
+      { featureSlug: 'retention',  uiLabel: '7-day data retention' },
+      { featureSlug: 'api',        uiLabel: 'Standard API access' },
+      { featureSlug: 'workspace',  uiLabel: 'Single team workspace' },
+      { featureSlug: 'dashboard',  uiLabel: 'Core dashboard with KPI cards' },
     ],
     popular:        true,
     isFree:         false,
     discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
   },
-  {
-    id:             '6a26929078d2d302b575cc10-business',
-    licenseTypeId:  '6a26929078d2d302b575cc10-business',
-    name:           'Business',
-    price:          29200,
-    includedUsers:  1,
-    features: [
-      { featureSlug: 'pro', uiLabel: 'Everything in Professional' },
-      { featureSlug: 'workspaces', uiLabel: 'Unlimited workspaces & sub-teams' },
-      { featureSlug: 'tuning', uiLabel: 'Custom AI model fine-tuning' },
-      { featureSlug: 'verification', uiLabel: 'Background verification stage' },
-      { featureSlug: 'permissions', uiLabel: 'Advanced role permissions' },
-      { featureSlug: 'retention', uiLabel: 'Unlimited data retention' }
-    ],
-    popular:        false,
-    isFree:         false,
-    discountConfig: { monthly: 0, quarterly: 5, 'half-yearly': 10, yearly: 20 },
-  }
 ];
 
 export interface CheckoutModalProps {
