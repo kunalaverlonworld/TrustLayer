@@ -177,11 +177,12 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
-  const handleLoginSuccess = (authUser: AuthUser) => {
+  const handleLoginSuccess = (name: string, hasLicense: boolean) => {
+    const authUser = loadSession();
     setUser(authUser);
     setShowLogin(false);
     // If no active license, scroll to pricing so they can pick a plan
-    if (!authUser.activeLicense) {
+    if (!hasLicense) {
       setTimeout(() => {
         const el = document.getElementById('pricing');
         if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
@@ -224,15 +225,7 @@ export default function App() {
             <LoginPage
               onClose={() => setShowLogin(false)}
               onForgotPassword={() => setShowLogin(false)}
-              onSuccess={handleLoginSuccess}
-              onNavigateToPricing={() => {
-                setShowLogin(false);
-                setShowContact(false);
-                setTimeout(() => {
-                  const el = document.getElementById('pricing');
-                  if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
-                }, 100);
-              }}
+              onLoginSuccess={handleLoginSuccess}
             />
           )}
         </div>
@@ -254,14 +247,7 @@ export default function App() {
           <LoginPage
             onClose={() => setShowLogin(false)}
             onForgotPassword={() => setShowLogin(false)}
-            onSuccess={handleLoginSuccess}
-            onNavigateToPricing={() => {
-              setShowLogin(false);
-              setTimeout(() => {
-                const el = document.getElementById('pricing');
-                if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
-              }, 100);
-            }}
+            onLoginSuccess={handleLoginSuccess}
           />
         )}
 
