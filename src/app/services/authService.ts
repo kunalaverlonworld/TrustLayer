@@ -27,11 +27,16 @@ export interface RegisterPayload {
 
 // ── Login via LMS proxy ────────────────────────────────────────────────────────
 export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
-  const res = await fetch(`${LMS_PROXY}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: payload.email, password: payload.password }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${LMS_PROXY}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: payload.email, password: payload.password }),
+    });
+  } catch (networkErr) {
+    throw new Error('Unable to reach the server. Please check your connection and try again.');
+  }
 
   const data = await res.json();
   if (!res.ok || !data.success) {
@@ -66,16 +71,21 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
 
 // ── Register via LMS proxy (Customer Sync) ────────────────────────────────────
 export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
-  const res = await fetch(`${LMS_PROXY}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name:     payload.name,
-      email:    payload.email,
-      source:   'trustlayer',
-      password: payload.password,
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${LMS_PROXY}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:     payload.name,
+        email:    payload.email,
+        source:   'trustlayer',
+        password: payload.password,
+      }),
+    });
+  } catch (networkErr) {
+    throw new Error('Unable to reach the server. Please check your connection and try again.');
+  }
 
   const data = await res.json();
   if (!res.ok || !data.success) {
