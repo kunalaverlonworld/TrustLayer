@@ -30,7 +30,6 @@ export interface RegisterPayload {
 
 const headers = () => ({
   'Content-Type': 'application/json',
-  'x-api-key': API_KEY,
 });
 
 // Login via LMS
