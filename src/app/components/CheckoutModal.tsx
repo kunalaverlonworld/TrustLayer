@@ -361,6 +361,32 @@ export default function CheckoutModal({
 
       if (!order?.orderId || !order?.key) throw new Error('Invalid payment order. Please try again.');
 
+      // ── Mock payment mode (no Razorpay keys configured yet) ─────────────────
+      if (order.key === 'rzp_test_mock') {
+        setProcessing(false);
+        const confirmed = window.confirm(
+          `🧪 TEST MODE — Razorpay not configured yet.\n\n` +
+          `Plan: ${currentPlan.name}\n` +
+          `Amount: ₹${totalDue.toLocaleString('en-IN')}\n\n` +
+          `Click OK to simulate a successful payment.`
+        );
+        if (!confirmed) return;
+        setProcessing(true);
+        await verifyPayment({
+          razorpay_payment_id: `mock_pay_${Date.now()}`,
+          razorpay_order_id:   order.orderId,
+          razorpay_signature:  'mock_signature',
+          licenseId:           currentPlan.id,
+          userId:              user?._id ?? '',
+          billingCycle:        cycle,
+        });
+        onSuccess?.(currentPlan.name, currentPlan.id);
+        setShowSuccess(true);
+        setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
+        return;
+      }
+
+      // ── Real Razorpay checkout ────────────────────────────────────────────────
       const loaded = await loadRazorpay();
       if (!loaded) throw new Error('Payment gateway failed to load. Please check your connection.');
 
