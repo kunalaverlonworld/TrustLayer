@@ -172,6 +172,12 @@ export default function App() {
     cycle?: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly';
   }>({ open: false });
 
+  // Pending plan — remembered when user tries to buy before logging in
+  const [pendingPlan, setPendingPlan] = useState<{
+    planId: string;
+    cycle: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly';
+  } | null>(null);
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3200);
     return () => clearTimeout(t);
@@ -181,6 +187,16 @@ export default function App() {
     const authUser = loadSession();
     setUser(authUser);
     setShowLogin(false);
+
+    // If user had clicked a plan before logging in → open checkout now
+    if (pendingPlan) {
+      setTimeout(() => {
+        setCheckout({ open: true, planId: pendingPlan.planId, cycle: pendingPlan.cycle });
+        setPendingPlan(null);
+      }, 300);
+      return;
+    }
+
     // If no active license, scroll to pricing so they can pick a plan
     if (!hasLicense) {
       setTimeout(() => {
@@ -195,7 +211,8 @@ export default function App() {
     cycle: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly'
   ) => {
     if (!user) {
-      // Not logged in — prompt login first, then they can come back
+      // Not logged in — remember the plan and prompt login
+      setPendingPlan({ planId, cycle });
       setShowLogin(true);
       return;
     }
