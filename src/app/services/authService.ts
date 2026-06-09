@@ -1,10 +1,7 @@
 // ─── LMS Auth Service ─────────────────────────────────────────────────────────
-// All API calls to the LMS auth endpoints
-import { syncPasswordToLMS, getActiveLicense } from './paymentService';
-
-const LMS_BASE   = 'https://license-system-v6ht.onrender.com';
-const API_KEY    = 'my-secret-key-123';
-const PRODUCT_ID = '6a26929078d2d302b575cc10';
+// All API calls go through the TrustLayer backend proxy (/api/lms/*)
+// to avoid CORS issues with calling the LMS directly from the browser.
+import { LMS_PROXY, PRODUCT_ID } from './config';
 
 export interface AuthUser {
   _id: string;
@@ -28,18 +25,11 @@ export interface RegisterPayload {
   password: string;
 }
 
-const headers = () => ({
-  'Content-Type': 'application/json',
-});
-
-// Login via LMS
+// ── Login via LMS proxy ────────────────────────────────────────────────────────
 export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
-  const res = await fetch(`${LMS_BASE}/api/external/customer-login`, {
+  const res = await fetch(`${LMS_PROXY}/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: payload.email, password: payload.password }),
   });
 
@@ -50,7 +40,7 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
 
   const customer = data.customer;
   const user: AuthUser = {
-    _id:           customer?.customerId ?? '',
+    _id:           customer?.customerId ?? customer?._id ?? '',
     name:          customer?.name ?? '',
     email:         customer?.email ?? '',
     token:         '',
@@ -64,7 +54,7 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
       const lt = licData.activeLicense.licenseTypeId ?? licData.activeLicense.licenseType ?? {};
       user.activeLicense = {
         licenseType: lt._id ?? '',
-        planName: lt.name ?? 'Active',
+        planName:    lt.name ?? 'Active',
       };
     }
   } catch (err) {
@@ -74,14 +64,11 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
   return user;
 }
 
-// Register via LMS (Customer Sync)
+// ── Register via LMS proxy (Customer Sync) ────────────────────────────────────
 export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
-  const res = await fetch(`${LMS_BASE}/api/external/customer-sync`, {
+  const res = await fetch(`${LMS_PROXY}/register`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name:     payload.name,
       email:    payload.email,
@@ -97,6 +84,19 @@ export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
 
   // Auto-login immediately after successful registration
   return lmsLogin({ email: payload.email, password: payload.password });
+}
+
+// ── Get user's current active license ────────────────────────────────────────
+export async function getActiveLicense(email: string, productId: string) {
+  try {
+    const res = await fetch(
+      `${LMS_PROXY}/active-license/${encodeURIComponent(email)}?productId=${productId}`
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 // ── Persist to sessionStorage ─────────────────────────────────────────────────

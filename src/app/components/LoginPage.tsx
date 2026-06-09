@@ -6,6 +6,7 @@ import {
   saveSession,
   loadSession,
 } from "../services/authService";
+import { LMS_PROXY, PRODUCT_ID } from "../services/config";
 
 // ─── Error Banner ──────────────────────────────────────────────────────────
 
@@ -296,8 +297,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   const checkActiveLicense = async (userEmail: string): Promise<boolean> => {
     try {
       const response = await fetch(
-        `https://license-system-v6ht.onrender.com/api/external/active-license/${userEmail}?productId=6a26929078d2d302b575cc10`,
-        { headers: { "x-api-key": "my-secret-key-123" } }
+        `${LMS_PROXY}/active-license/${encodeURIComponent(userEmail)}?productId=${PRODUCT_ID}`
       );
       if (response.ok) {
         const data = await response.json();

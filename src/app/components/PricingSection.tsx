@@ -4,13 +4,11 @@ import {
   Check, Star, Shield, Zap, Globe, FileText, BarChart3,
   Users, Phone, ArrowRight, Lock, Bell, Layers, Sparkles, Crown,
 } from 'lucide-react';
+import { LMS_PROXY } from '../services/config';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ⚙️  CONFIG — replace this with the real TrustLayer product ID from the LMS
-// ─────────────────────────────────────────────────────────────────────────────
-const LMS_PRODUCT_ID = '6a26929078d2d302b575cc10';
-const LMS_API_KEY    = 'my-secret-key-123';
-const LMS_BASE_URL   = 'https://license-system-v6ht.onrender.com/api/license/public/licenses-by-product';
+// Plans are fetched via the TrustLayer backend proxy (/api/lms/plans)
+// to avoid CORS issues with calling the LMS directly from the browser.
+const LMS_PRODUCT_ID = '6a26929078d2d302b575cc10'; // kept for fallback plan IDs
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const C = {
@@ -350,7 +348,7 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${LMS_BASE_URL}/${LMS_PRODUCT_ID}`);
+        const res = await fetch(`${LMS_PROXY}/plans`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 

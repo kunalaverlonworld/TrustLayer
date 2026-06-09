@@ -7,11 +7,10 @@ import {
 import { loadSession } from '../services/authService';
 import { createOrder, verifyPayment, getActiveLicense } from '../services/paymentService';
 import { loadRazorpay } from '../utils/loadRazorpay';
+import { PRODUCT_ID, LMS_PROXY } from '../services/config';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const PRODUCT_ID = '6a26929078d2d302b575cc10';
-const LMS_API_KEY = 'my-secret-key-123';
-const LMS_BASE   = 'https://license-system-v6ht.onrender.com';
+// (PRODUCT_ID and backend URL imported from config — no direct LMS calls)
 
 // ── Brand tokens (matches TrustLayer palette) ─────────────────────────────────
 const C = {
@@ -310,7 +309,7 @@ export default function CheckoutModal({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch(`${LMS_BASE}/api/license/public/licenses-by-product/${PRODUCT_ID}`)
+    fetch(`${LMS_PROXY}/plans`)
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -400,10 +399,10 @@ export default function CheckoutModal({
         // ── Free plan: activate directly via LMS free-assignment endpoint ──────
         // The LMS assigns the free license to the user by email + licenseId
         const res = await fetch(
-          `${LMS_BASE}/api/payment/create-order`,
+          `${LMS_PROXY}/payment/create-order`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': LMS_API_KEY },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId:       user?._id,
               licenseId:    currentPlan.id,

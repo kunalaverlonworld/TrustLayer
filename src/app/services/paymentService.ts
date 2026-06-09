@@ -1,19 +1,15 @@
 // ── Payment & License API service ─────────────────────────────────────────────
-// Confirmed working endpoints on https://license-system-v6ht.onrender.com :
-//   POST /api/payment/create-order   { userId, licenseId, billingCycle, amount(paise) }
-//   POST /api/payment/verify         { razorpay_payment_id, razorpay_order_id, razorpay_signature, transactionId? }
-//   GET  /api/external/active-license/:email?productId=...
-//   POST /api/external/customer-password-sync { email, passwordHash }
+// All calls go through the TrustLayer backend proxy to avoid CORS.
+import { LMS_PROXY } from './config';
 
-const BASE    = 'https://license-system-v6ht.onrender.com';
-const API_KEY = 'my-secret-key-123';
+const BASE = LMS_PROXY;
 
 // TrustLayer's own secret — tell LMS admin to whitelist this as a webhook/callback secret
 export const TL_SECRET_KEY = 'tl-trustlayer-secret-2024-xK9mP3qR';
 
+// No API key needed — the backend proxy handles it
 const h = () => ({
   'Content-Type': 'application/json',
-  'x-api-key': API_KEY,
 });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,14 +22,14 @@ export interface OrderResult {
   transactionId?: string;
 }
 
-// ── Create Razorpay order via LMS ─────────────────────────────────────────────
+// ── Create Razorpay order via backend proxy ───────────────────────────────────
 export async function createOrder(payload: {
   userId: string;
   licenseId: string;    // lic._id (the license document ID)
   billingCycle: string;
   amount: number;       // amount in paise (rupees × 100)
 }): Promise<OrderResult> {
-  const res = await fetch(`${BASE}/api/payment/create-order`, {
+  const res = await fetch(`${BASE}/payment/create-order`, {
     method: 'POST',
     headers: h(),
     body: JSON.stringify(payload),
@@ -55,7 +51,7 @@ export async function verifyPayment(payload: {
   razorpay_signature: string;
   transactionId?: string;
 }): Promise<void> {
-  const res = await fetch(`${BASE}/api/payment/verify-payment`, {
+  const res = await fetch(`${BASE}/payment/verify`, {
     method: 'POST',
     headers: h(),
     body: JSON.stringify(payload),
@@ -73,8 +69,7 @@ export async function verifyPayment(payload: {
 export async function getActiveLicense(email: string, productId: string) {
   try {
     const res = await fetch(
-      `${BASE}/api/external/active-license/${encodeURIComponent(email)}?productId=${productId}`,
-      { headers: { 'x-api-key': API_KEY } }
+      `${BASE}/active-license/${encodeURIComponent(email)}?productId=${productId}`
     );
     if (!res.ok) return null;
     return res.json();
@@ -84,11 +79,9 @@ export async function getActiveLicense(email: string, productId: string) {
 }
 
 // ── Sync hashed password to LMS after registration/password-change ────────────
-// LMS expects: { email, passwordHash }
-// Call this immediately after user registers or changes password
 export async function syncPasswordToLMS(email: string, passwordHash: string): Promise<void> {
   try {
-    const res = await fetch(`${BASE}/api/external/customer-password-sync`, {
+    const res = await fetch(`${BASE}/password-sync`, {
       method: 'POST',
       headers: h(),
       body: JSON.stringify({ email, passwordHash }),
