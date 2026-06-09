@@ -1,5 +1,6 @@
 // ─── LMS Auth Service ─────────────────────────────────────────────────────────
 // All API calls to the LMS auth endpoints
+import { syncPasswordToLMS, getActiveLicense } from './paymentService';
 
 const LMS_BASE   = 'https://lisence-system.onrender.com';
 const API_KEY    = 'my-secret-key-123';
@@ -46,7 +47,23 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
     throw new Error(data?.message || data?.error || 'Invalid email or password');
   }
 
-  return normaliseUser(data);
+  const user = normaliseUser(data);
+
+  // Fetch active license and attach it if active
+  try {
+    const licData = await getActiveLicense(user.email, PRODUCT_ID);
+    if (licData?.activeLicense?.status === 'active') {
+      const lt = licData.activeLicense.licenseTypeId ?? licData.activeLicense.licenseType ?? {};
+      user.activeLicense = {
+        licenseType: lt._id ?? '',
+        planName: lt.name ?? 'Active',
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to fetch active license during login:', err);
+  }
+
+  return user;
 }
 
 // Register via LMS
@@ -72,8 +89,13 @@ export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
     throw new Error(msg);
   }
 
-  // Register returns { success, message, user } — no token yet, must login
-  // Auto-login to get the token
+  // LMS register returns { success, message, user } — no token.
+  // Sync the plain password as a bcrypt hash to LMS so it can authenticate later.
+  // The LMS stores its own hash; we send the raw password so LMS can re-hash it.
+  // (customer-password-sync accepts the raw password and hashes it server-side)
+  syncPasswordToLMS(payload.email, payload.password).catch(() => {});
+
+  // Auto-login immediately to obtain the JWT token
   return lmsLogin({ email: payload.email, password: payload.password });
 }
 

@@ -5,7 +5,7 @@ import {
   MapPin, Hash, ChevronDown,
 } from 'lucide-react';
 import { loadSession } from '../services/authService';
-import { purchaseLicense, createOrder, verifyPayment, getActiveLicense } from '../services/paymentService';
+import { createOrder, verifyPayment, getActiveLicense } from '../services/paymentService';
 import { loadRazorpay } from '../utils/loadRazorpay';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -50,6 +50,7 @@ export interface CheckoutModalProps {
   preselectedCycle?: BillingCycle;
   /** Triggered when user needs to log in first */
   onNeedLogin?: () => void;
+  onSuccess?: (planName: string, planId: string) => void;
 }
 
 const BILLING_MONTHS: Record<BillingCycle, number> = {
@@ -156,7 +157,7 @@ function InputField({
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function CheckoutModal({
-  isOpen, onClose, preselectedPlanId, preselectedCycle, onNeedLogin,
+  isOpen, onClose, preselectedPlanId, preselectedCycle, onNeedLogin, onSuccess,
 }: CheckoutModalProps) {
   const user      = loadSession();
   const userEmail = user?.email ?? null;
@@ -296,71 +297,80 @@ export default function CheckoutModal({
     if (existingLicenseName && existingIsFreePlan && isFreePlan) {
       setShowUpgrade(true); return;
     }
-    // Already on paid plan
+    // Already on paid plan → show already active
     if (existingLicenseName && !existingIsFreePlan) {
       setShowAlreadyActive(true); return;
     }
 
     setProcessing(true);
     try {
-      const purchaseRes = await purchaseLicense({
-        name:         form.companyName,
-        email:        userEmail,
-        productId:    PRODUCT_ID,
-        licenseId:    currentPlan.id,
-        licenseTypeId: currentPlan.licenseTypeId,
-        billingCycle: cycle,
-        trial:        false,
-        amount:       Math.round(totalDue),
-        currency:     'INR',
-        paymentMode:  isFreePlan ? 'free' : 'razorpay',
-        source:       'trustlayer',
-      });
-
       if (isFreePlan) {
+        // ── Free plan: activate directly via LMS free-assignment endpoint ──────
+        // The LMS assigns the free license to the user by email + licenseId
+        const res = await fetch(
+          `${LMS_BASE}/api/payment/create-order`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': LMS_API_KEY },
+            body: JSON.stringify({
+              userId:       user?._id,
+              licenseId:    currentPlan.id,
+              billingCycle: cycle,
+              amount:       0,  // free plan
+            }),
+          }
+        );
+        // For free plans the LMS may return success or an order — either way show success
+        const resData = await res.json();
+        if (!res.ok) {
+          const msg: string = resData?.message ?? '';
+          if (msg.toLowerCase().includes('already')) { setShowUpgrade(true); return; }
+          throw new Error(msg || 'Free plan activation failed');
+        }
+        onSuccess?.(currentPlan.name, currentPlan.id);
         setShowSuccess(true);
         setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
         return;
       }
 
+      // ── Paid plan: create Razorpay order then open checkout ─────────────────
       const order = await createOrder({
-        userId:       purchaseRes.userId,
+        userId:       user?._id ?? '',
         licenseId:    currentPlan.id,
         billingCycle: cycle,
-        amount:       Math.round(totalDue * 100),
+        amount:       Math.round(totalDue * 100),  // paise
       });
 
-      if (!order?.orderId || !order?.key) throw new Error('Invalid payment order response');
+      if (!order?.orderId || !order?.key) throw new Error('Invalid payment order. Please try again.');
 
       const loaded = await loadRazorpay();
-      if (!loaded) throw new Error('Payment gateway failed to load. Please try again.');
+      if (!loaded) throw new Error('Payment gateway failed to load. Please check your connection.');
 
       const rzp = new (window as any).Razorpay({
-        key:        order.key,
-        amount:     Math.round(totalDue * 100),
-        currency:   order.currency ?? 'INR',
-        order_id:   order.orderId,
-        name:       'TrustLayer',
+        key:         order.key,
+        amount:      Math.round(totalDue * 100),
+        currency:    order.currency ?? 'INR',
+        order_id:    order.orderId,
+        name:        'TrustLayer',
         description: `${currentPlan.name} — ${BILLING_LABELS[cycle]}`,
-        prefill:    { name: form.companyName, email: userEmail, contact: form.phone },
-        theme:      { color: C.teal },
+        prefill:     { name: form.companyName, email: userEmail, contact: form.phone },
+        theme:       { color: C.teal },
         handler: async (response: any) => {
           try {
             await verifyPayment({
-              transactionId:        purchaseRes.transactionId,
-              razorpay_payment_id:  response.razorpay_payment_id,
-              razorpay_order_id:    response.razorpay_order_id,
-              razorpay_signature:   response.razorpay_signature,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_signature:  response.razorpay_signature,
+              transactionId:       order.transactionId,
             });
+            onSuccess?.(currentPlan.name, currentPlan.id);
             setShowSuccess(true);
             setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
           } catch {
-            showToast('Payment verification failed. Contact support.');
+            showToast('Payment verification failed. Please contact support.');
           }
         },
-        modal: {
-          ondismiss: () => setProcessing(false),
-        },
+        modal: { ondismiss: () => setProcessing(false) },
       });
       rzp.open();
     } catch (err: any) {

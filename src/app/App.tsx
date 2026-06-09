@@ -14,7 +14,7 @@ import { ContactSupport } from './components/ContactSupport';
 import Footer from './components/Footer';
 import './styles.css';
 import LoginPage from './components/LoginPage';
-import { loadSession, clearSession, type AuthUser } from './services/authService';
+import { loadSession, saveSession, clearSession, type AuthUser } from './services/authService';
 import CheckoutModal from './components/CheckoutModal';
 
 // ── Loader ────────────────────────────────────────────────────────────────────
@@ -248,13 +248,25 @@ export default function App() {
         <Footer />
       </div>
 
-      {/* Checkout Modal */}
       <CheckoutModal
         isOpen={checkout.open}
         onClose={() => setCheckout({ open: false })}
         preselectedPlanId={checkout.planId}
         preselectedCycle={checkout.cycle}
         onNeedLogin={() => { setCheckout({ open: false }); setShowLogin(true); }}
+        onSuccess={(planName, planId) => {
+          if (user) {
+            const updated = {
+              ...user,
+              activeLicense: {
+                licenseType: planId,
+                planName: planName,
+              },
+            };
+            setUser(updated);
+            saveSession(updated);
+          }
+        }}
       />
     </>
   );
