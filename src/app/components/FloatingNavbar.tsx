@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, LayoutDashboard, User, LogOut, Settings, CreditCard } from 'lucide-react';
-import type { AuthUser } from '../services/authService';
+import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 
 const C = {
   bg:       '#edf5fb',
@@ -17,15 +16,21 @@ const C = {
 
 interface FloatingNavbarProps {
   onLoginClick?: () => void;
-  user?: AuthUser | null;
-  onLogout?: () => void;
+  onDashboardClick?: () => void;
 }
 
-export default function FloatingNavbar({ onLoginClick, user, onLogout }: FloatingNavbarProps) {
-  const [scrolled, setScrolled]       = useState(false);
-  const [mobileOpen, setMobileOpen]   = useState(false);
+interface User {
+  name: string;
+  email: string;
+  customerId: string;
+  source: string;
+}
+
+export default function FloatingNavbar({ onLoginClick, onDashboardClick }: FloatingNavbarProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -33,15 +38,27 @@ export default function FloatingNavbar({ onLoginClick, user, onLogout }: Floatin
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  // Close dropdown on outside click
+  // Load user from localStorage on mount
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Failed to parse user:', e);
+      }
+    }
+
+    // Listen for login events
+    const handleUserLogin = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+
+    window.addEventListener('userLoggedIn', handleUserLogin);
+    return () => window.removeEventListener('userLoggedIn', handleUserLogin);
   }, []);
 
   const links: { label: string; id: string }[] = [
@@ -56,46 +73,25 @@ export default function FloatingNavbar({ onLoginClick, user, onLogout }: Floatin
   const scroll = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+      const offset = 80;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top, behavior: 'smooth' });
     }
     setMobileOpen(false);
   };
 
-  // User initials avatar
-  const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    setUser(null);
+    setDropdownOpen(false);
+    window.dispatchEvent(new Event('userLoggedOut'));
+  };
 
-  const dropdownItems = [
-    {
-      icon: LayoutDashboard,
-      label: 'Dashboard',
-      onClick: () => {
-        window.open('https://app.trustlayer.io/dashboard', '_blank');
-        setDropdownOpen(false);
-      },
-    },
-    {
-      icon: CreditCard,
-      label: 'My Plan',
-      onClick: () => {
-        const el = document.getElementById('pricing');
-        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
-        setDropdownOpen(false);
-      },
-    },
-    {
-      icon: User,
-      label: 'Profile',
-      onClick: () => { setDropdownOpen(false); },
-    },
-    {
-      icon: Settings,
-      label: 'Settings',
-      onClick: () => { setDropdownOpen(false); },
-    },
-  ];
+  const handleDashboard = () => {
+    setDropdownOpen(false);
+    onDashboardClick?.();
+  };
 
   return (
     <>
@@ -156,133 +152,109 @@ export default function FloatingNavbar({ onLoginClick, user, onLogout }: Floatin
           </div>
 
           {/* Right actions */}
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} className="nav-desktop">
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', position: 'relative' }} className="nav-desktop">
             {user ? (
-              /* ── Logged-in user dropdown ── */
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <>
+                {/* User dropdown button */}
                 <button
-                  onClick={() => setDropdownOpen(o => !o)}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    background: 'none', border: `1.5px solid ${C.border}`,
-                    borderRadius: 100, cursor: 'pointer', padding: '5px 12px 5px 5px',
+                    background: 'none', border: 'none', cursor: 'pointer',
                     fontFamily: "'Inter', sans-serif",
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                    boxShadow: dropdownOpen ? `0 0 0 3px rgba(0,184,212,0.12)` : 'none',
+                    fontSize: 14, fontWeight: 600, color: C.navy,
+                    padding: '8px 12px', borderRadius: 100,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    transition: 'all 0.2s',
+                    backgroundColor: dropdownOpen ? C.border : 'transparent',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = C.teal)}
-                  onMouseLeave={e => { if (!dropdownOpen) e.currentTarget.style.borderColor = C.border; }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = C.teal;
+                    e.currentTarget.style.backgroundColor = C.border;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = C.navy;
+                    if (!dropdownOpen) e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
-                  {/* Avatar */}
-                  <div style={{
-                    width: 30, height: 30, borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <span style={{ color: 'white', fontWeight: 800, fontSize: 11 }}>{initials}</span>
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.navy, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {user.name || user.email}
-                  </span>
-                  <ChevronDown
-                    size={14}
-                    style={{
-                      color: C.muted,
-                      transition: 'transform 0.2s',
-                      transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      flexShrink: 0,
-                    }}
-                  />
+                  <span>{user.name}</span>
+                  <ChevronDown size={16} style={{ 
+                    transition: 'transform 0.2s',
+                    transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                  }} />
                 </button>
 
                 {/* Dropdown menu */}
                 <AnimatePresence>
                   {dropdownOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                      transition={{ duration: 0.18 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
                       style={{
-                        position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                        width: 220, background: 'white',
-                        borderRadius: 14, border: `1px solid ${C.border}`,
-                        boxShadow: `0 8px 32px rgba(10,31,61,0.12)`,
-                        overflow: 'hidden', zIndex: 200,
-                        fontFamily: "'Inter', sans-serif",
+                        position: 'absolute', top: 60, right: 0,
+                        background: 'white',
+                        borderRadius: 12,
+                        border: `1px solid ${C.border}`,
+                        boxShadow: `0 12px 32px ${C.shadow}`,
+                        overflow: 'hidden',
+                        minWidth: 200,
                       }}
                     >
-                      {/* User info header */}
-                      <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}`, background: '#f8fbff' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user.name}
-                        </div>
-                        <div style={{ fontSize: 11, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user.email}
-                        </div>
-                        {user.activeLicense && (
-                          <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            marginTop: 5, padding: '2px 8px', borderRadius: 20,
-                            background: 'rgba(0,184,212,0.10)', fontSize: 10,
-                            fontWeight: 700, color: C.tealDark,
-                          }}>
-                            {user.activeLicense.planName} Plan
-                          </div>
-                        )}
+                      {/* Email display */}
+                      <div style={{
+                        padding: '12px 16px',
+                        borderBottom: `1px solid ${C.border}`,
+                        fontSize: 12,
+                        color: C.muted,
+                        fontWeight: 500,
+                      }}>
+                        {user.email}
                       </div>
 
-                      {/* Menu items */}
-                      <div style={{ padding: '6px 0' }}>
-                        {dropdownItems.map(item => {
-                          const Icon = item.icon;
-                          return (
-                            <button
-                              key={item.label}
-                              onClick={item.onClick}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                width: '100%', padding: '9px 14px',
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                fontFamily: "'Inter', sans-serif",
-                                fontSize: 13, fontWeight: 500, color: C.body,
-                                textAlign: 'left', transition: 'background 0.15s, color 0.15s',
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.background = '#f0f9fc'; e.currentTarget.style.color = C.teal; }}
-                              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = C.body; }}
-                            >
-                              <Icon size={15} style={{ flexShrink: 0 }} />
-                              {item.label}
-                            </button>
-                          );
-                        })}
+                      {/* Dashboard option */}
+                      <button
+                        onClick={handleDashboard}
+                        style={{
+                          width: '100%', textAlign: 'left',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 14, fontWeight: 500, color: C.body,
+                          padding: '12px 16px',
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                      >
+                        <LayoutDashboard size={16} color={C.teal} />
+                        <span>Dashboard</span>
+                      </button>
 
-                        {/* Divider + Logout */}
-                        <div style={{ height: 1, background: C.border, margin: '6px 0' }} />
-                        <button
-                          onClick={() => { onLogout?.(); setDropdownOpen(false); }}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 10,
-                            width: '100%', padding: '9px 14px',
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            fontFamily: "'Inter', sans-serif",
-                            fontSize: 13, fontWeight: 600, color: '#ef4444',
-                            textAlign: 'left', transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.background = '#fff5f5'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
-                        >
-                          <LogOut size={15} style={{ flexShrink: 0 }} />
-                          Sign Out
-                        </button>
-                      </div>
+                      {/* Sign out option */}
+                      <button
+                        onClick={handleSignOut}
+                        style={{
+                          width: '100%', textAlign: 'left',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 14, fontWeight: 500, color: '#ef4444',
+                          padding: '12px 16px',
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          transition: 'background 0.2s',
+                          borderTop: `1px solid ${C.border}`,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#fff5f5')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                      >
+                        <LogOut size={16} />
+                        <span>Sign Out</span>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </>
             ) : (
-              /* ── Guest buttons ── */
               <>
                 <button
                   onClick={onLoginClick}
@@ -363,55 +335,42 @@ export default function FloatingNavbar({ onLoginClick, user, onLogout }: Floatin
                 {link.label}
               </button>
             ))}
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
               {user ? (
                 <>
-                  {/* Mobile user info */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${C.border}`, marginBottom: 4 }}>
-                    <div style={{
-                      width: 34, height: 34, borderRadius: '50%',
-                      background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}>
-                      <span style={{ color: 'white', fontWeight: 800, fontSize: 12 }}>{initials}</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.navy }}>{user.name}</div>
-                      <div style={{ fontSize: 11, color: C.muted }}>{user.email}</div>
-                    </div>
+                  <div style={{
+                    padding: '12px 0',
+                    fontSize: 14, fontWeight: 600, color: C.navy,
+                  }}>
+                    Hi, {user.name}
                   </div>
-                  {dropdownItems.map(item => {
-                    const Icon = item.icon;
-                    return (
-                      <button key={item.label} onClick={() => { item.onClick(); setMobileOpen(false); }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
-                          fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600,
-                          color: C.body, padding: '10px 14px', borderRadius: 10,
-                        }}
-                      >
-                        <Icon size={15} />{item.label}
-                      </button>
-                    );
-                  })}
                   <button
-                    onClick={() => { onLogout?.(); setMobileOpen(false); }}
+                    onClick={handleDashboard}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      background: '#fff5f5', border: '1.5px solid #fecaca', cursor: 'pointer',
-                      fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600,
-                      color: '#ef4444', padding: '10px 14px', borderRadius: 10,
+                      background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 14, fontWeight: 600, color: C.navy,
+                      padding: '10px', borderRadius: 100, transition: 'border-color 0.2s',
                     }}
                   >
-                    <LogOut size={15} />Sign Out
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    style={{
+                      background: 'none', border: `1.5px solid #ef4444`, cursor: 'pointer',
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 14, fontWeight: 600, color: '#ef4444',
+                      padding: '10px', borderRadius: 100,
+                    }}
+                  >
+                    Sign Out
                   </button>
                 </>
               ) : (
                 <>
                   <button
-                    onClick={() => { onLoginClick?.(); setMobileOpen(false); }}
+                    onClick={onLoginClick}
                     style={{
                       background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
                       fontFamily: "'Inter', sans-serif",
@@ -421,16 +380,13 @@ export default function FloatingNavbar({ onLoginClick, user, onLogout }: Floatin
                   >
                     Login
                   </button>
-                  <button
-                    onClick={() => { onLoginClick?.(); setMobileOpen(false); }}
-                    style={{
-                      background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
-                      border: 'none', cursor: 'pointer',
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 14, fontWeight: 700, color: 'white',
-                      padding: '10px', borderRadius: 100,
-                    }}
-                  >
+                  <button style={{
+                    background: `linear-gradient(135deg, ${C.teal}, ${C.tealDark})`,
+                    border: 'none', cursor: 'pointer',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 700, color: 'white',
+                    padding: '10px', borderRadius: 100,
+                  }}>
                     Get Started
                   </button>
                 </>

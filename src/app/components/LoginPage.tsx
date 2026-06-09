@@ -101,7 +101,7 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
           onSuccess?.(user);
 
           // Dispatch event to notify Navbar of login status change
-          window.dispatchEvent(new Event('userLoginStatusChanged'));
+          window.dispatchEvent(new Event('userLoggedIn'));
 
           // ✅ CLOSE MODAL
           onClose?.();
@@ -176,7 +176,7 @@ export default function LoginPage({ onForgotPassword, onClose, onSuccess, onNavi
           onSuccess?.(user);
 
           // Dispatch event to notify Navbar of login status change
-          window.dispatchEvent(new Event('userLoginStatusChanged'));
+          window.dispatchEvent(new Event('userLoggedIn'));
 
           // ✅ CLOSE MODAL
           onClose?.();

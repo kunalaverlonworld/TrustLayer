@@ -149,6 +149,22 @@ export default function App() {
   // Auth state — restored from sessionStorage on mount
   const [user, setUser] = useState<AuthUser | null>(() => loadSession());
 
+  useEffect(() => {
+    const handleLogin = () => {
+      setUser(loadSession());
+    };
+    const handleLogoutEvent = () => {
+      clearSession();
+      setUser(null);
+    };
+    window.addEventListener('userLoggedIn', handleLogin);
+    window.addEventListener('userLoggedOut', handleLogoutEvent);
+    return () => {
+      window.removeEventListener('userLoggedIn', handleLogin);
+      window.removeEventListener('userLoggedOut', handleLogoutEvent);
+    };
+  }, []);
+
   // Checkout state
   const [checkout, setCheckout] = useState<{
     open: boolean;
@@ -197,10 +213,9 @@ export default function App() {
         {loading && <Loader />}
         <Toaster />
         <div className="min-h-screen">
-          <FloatingNavbar
+           <FloatingNavbar
             onLoginClick={() => setShowLogin(true)}
-            user={user}
-            onLogout={handleLogout}
+            onDashboardClick={() => window.open('https://app.trustlayer.io/dashboard', '_blank')}
           />
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
@@ -232,8 +247,7 @@ export default function App() {
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
         <FloatingNavbar
           onLoginClick={() => setShowLogin(true)}
-          user={user}
-          onLogout={handleLogout}
+          onDashboardClick={() => window.open('https://app.trustlayer.io/dashboard', '_blank')}
         />
 
         {showLogin && (
