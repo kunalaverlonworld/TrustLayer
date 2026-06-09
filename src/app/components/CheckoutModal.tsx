@@ -347,7 +347,11 @@ export default function CheckoutModal({
         // For now activate directly in session so user can access dashboard.
         onSuccess?.(currentPlan.name, currentPlan.id);
         setShowSuccess(true);
-        setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
+        setTimeout(() => {
+          setShowSuccess(false);
+          onClose();
+          window.location.href = '/';
+        }, 3000);
         return;
       }
 
@@ -382,7 +386,11 @@ export default function CheckoutModal({
         });
         onSuccess?.(currentPlan.name, currentPlan.id);
         setShowSuccess(true);
-        setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
+        setTimeout(() => {
+          setShowSuccess(false);
+          onClose();
+          window.location.href = '/';
+        }, 3000);
         return;
       }
 
@@ -411,7 +419,11 @@ export default function CheckoutModal({
             });
             onSuccess?.(currentPlan.name, currentPlan.id);
             setShowSuccess(true);
-            setTimeout(() => { setShowSuccess(false); onClose(); }, 3000);
+            setTimeout(() => {
+              setShowSuccess(false);
+              onClose();
+              window.location.href = '/';
+            }, 3000);
           } catch {
             showToast('Payment verification failed. Please contact support.');
           }

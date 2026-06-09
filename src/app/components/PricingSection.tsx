@@ -231,6 +231,8 @@ function SkeletonCard() {
   );
 }
 
+import { loadSession } from '../services/authService';
+
 // ── Component props ───────────────────────────────────────────────────────────
 interface PricingSectionProps {
   onContactClick?: () => void;
@@ -243,6 +245,25 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
   const [plans, setPlans]   = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    setCurrentUser(loadSession());
+    
+    const handleAuthChange = () => {
+      setCurrentUser(loadSession());
+    };
+    
+    window.addEventListener('userLoggedIn', handleAuthChange);
+    window.addEventListener('userLoggedOut', handleAuthChange);
+    window.addEventListener('planActivated', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('userLoggedIn', handleAuthChange);
+      window.removeEventListener('userLoggedOut', handleAuthChange);
+      window.removeEventListener('planActivated', handleAuthChange);
+    };
+  }, []);
 
   // ── Fetch plans from LMS ───────────────────────────────────────────────────
   useEffect(() => {
@@ -306,6 +327,16 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
 
   // ── CTA handler ────────────────────────────────────────────────────────────
   const handleCTA = (plan: Plan) => {
+    const activeLicense = currentUser?.activeLicense;
+    const isCurrentPlan = activeLicense && (
+      activeLicense.licenseType === plan.licenseType ||
+      activeLicense.planName.toLowerCase() === plan.name.toLowerCase()
+    );
+    if (isCurrentPlan) {
+      alert("This plan is already active on your account.");
+      return;
+    }
+
     if (plan.isEnterprise) {
       onContactClick?.();
     } else {
@@ -488,6 +519,12 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
                 const Icon = meta.icon;
                 const price = computePrice(plan, cycle);
                 const discount = plan.discountConfig?.[cycle] ?? 0;
+                
+                const activeLicense = currentUser?.activeLicense;
+                const isCurrentPlan = activeLicense && (
+                  activeLicense.licenseType === plan.licenseType ||
+                  activeLicense.planName.toLowerCase() === plan.name.toLowerCase()
+                );
 
                 return (
                   <motion.div
@@ -589,16 +626,23 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
                       {/* CTA button */}
                       <button
                         onClick={() => handleCTA(plan)}
-                        className="w-full py-2.5 rounded-xl text-sm font-bold mb-6 transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
+                        disabled={!!isCurrentPlan}
+                        className="w-full py-2.5 rounded-xl text-sm font-bold mb-6 transition-all duration-200 flex items-center justify-center gap-1.5"
                         style={{
-                          background: meta.ctaBg,
-                          color: meta.ctaText,
+                          background: isCurrentPlan ? '#cbd5e1' : meta.ctaBg,
+                          color: isCurrentPlan ? '#64748b' : meta.ctaText,
                           fontFamily: "'Inter', sans-serif",
                           border: 'none',
-                          cursor: 'pointer',
+                          cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
+                          opacity: isCurrentPlan ? 0.8 : 1,
                         }}
                       >
-                        {plan.isEnterprise ? (
+                        {isCurrentPlan ? (
+                          <>
+                            <Check style={{ width: 14, height: 14 }} />
+                            Current Plan
+                          </>
+                        ) : plan.isEnterprise ? (
                           <>
                             <Phone style={{ width: 14, height: 14 }} />
                             Contact Sales
