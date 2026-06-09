@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 
 const router = express.Router();
 
-const LMS_BASE   = "https://license-system-v6ht.onrender.com";
+const LMS_BASE   = process.env.LMS_BASE || "https://license-system-v6ht.onrender.com";
 const LMS_API_KEY = process.env.LMS_API_KEY || "my-secret-key-123";
 const PRODUCT_ID  = "6a26929078d2d302b575cc10";
 
@@ -84,7 +84,7 @@ router.get("/active-license/:email", async (req: Request, res: Response) => {
     const productId = (req.query.productId as string) || PRODUCT_ID;
     const { status, data } = await proxyToLMS(
       "GET",
-      `/api/external/active-license/${encodeURIComponent(email)}?productId=${productId}`
+      `/api/external/actve-license/${encodeURIComponent(email)}?productId=${productId}`
     );
     return res.status(status).json(data);
   } catch (err: any) {
