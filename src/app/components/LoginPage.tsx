@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X } from "lucide-react";
+import { lmsLogin, lmsRegister, saveSession, type AuthUser } from "../services/authService";
 
 // ─── Password strength ────────────────────────────────────────────────────────
 
@@ -94,9 +95,10 @@ function EyeBtn({ show, onToggle }: { show: boolean; onToggle: () => void }) {
 interface LoginPageProps {
   onForgotPassword?: () => void;
   onClose?: () => void;
+  onSuccess?: (user: AuthUser) => void;
 }
 
-export default function LoginPage({ onForgotPassword, onClose }: LoginPageProps) {
+export default function LoginPage({ onForgotPassword, onClose, onSuccess }: LoginPageProps) {
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
   const [confirm, setConfirm]           = useState("");
@@ -130,11 +132,15 @@ export default function LoginPage({ onForgotPassword, onClose }: LoginPageProps)
     }
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      // TODO: replace with real API calls
+      const user = isSignUp
+        ? await lmsRegister({ name, email, password })
+        : await lmsLogin({ email, password });
+      saveSession(user);
+      onSuccess?.(user);
+      onClose?.();
     } catch (err: any) {
       setHasError(true);
-      setErrorMessage(err?.message || "Something went wrong");
+      setErrorMessage(err?.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

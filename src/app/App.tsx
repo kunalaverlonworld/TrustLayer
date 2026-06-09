@@ -14,7 +14,10 @@ import { ContactSupport } from './components/ContactSupport';
 import Footer from './components/Footer';
 import './styles.css';
 import LoginPage from './components/LoginPage';
+import { loadSession, clearSession, type AuthUser } from './services/authService';
+import CheckoutModal from './components/CheckoutModal';
 
+// ── Loader ────────────────────────────────────────────────────────────────────
 function Loader() {
   const wrapRef    = useRef(null);
   const poweredRef = useRef(null);
@@ -136,22 +139,67 @@ function Loader() {
   );
 }
 
+// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading]         = useState(true);
   const [showContact, setShowContact] = useState(false);
   const [showLogin, setShowLogin]     = useState(false);
+
+  // Auth state — restored from sessionStorage on mount
+  const [user, setUser] = useState<AuthUser | null>(() => loadSession());
+
+  // Checkout state
+  const [checkout, setCheckout] = useState<{
+    open: boolean;
+    planId?: string;
+    cycle?: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly';
+  }>({ open: false });
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 3200);
     return () => clearTimeout(t);
   }, []);
 
+  const handleLoginSuccess = (authUser: AuthUser) => {
+    setUser(authUser);
+    setShowLogin(false);
+    // If no active license, scroll to pricing so they can pick a plan
+    if (!authUser.activeLicense) {
+      setTimeout(() => {
+        const el = document.getElementById('pricing');
+        if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+      }, 400);
+    }
+  };
+
+  const handlePlanSelect = (
+    planId: string,
+    cycle: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly'
+  ) => {
+    if (!user) {
+      // Not logged in — prompt login first, then they can come back
+      setShowLogin(true);
+      return;
+    }
+    setCheckout({ open: true, planId, cycle });
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setUser(null);
+  };
+
+  // Contact page view
   if (showContact) {
     return (
       <>
         {loading && <Loader />}
         <div className="min-h-screen">
-          <FloatingNavbar onLoginClick={() => setShowLogin(true)} />
+          <FloatingNavbar
+            onLoginClick={() => setShowLogin(true)}
+            user={user}
+            onLogout={handleLogout}
+          />
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
           </div>
@@ -159,6 +207,7 @@ export default function App() {
             <LoginPage
               onClose={() => setShowLogin(false)}
               onForgotPassword={() => setShowLogin(false)}
+              onSuccess={handleLoginSuccess}
             />
           )}
         </div>
@@ -170,12 +219,17 @@ export default function App() {
     <>
       {loading && <Loader />}
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
-        <FloatingNavbar onLoginClick={() => setShowLogin(true)} />
+        <FloatingNavbar
+          onLoginClick={() => setShowLogin(true)}
+          user={user}
+          onLogout={handleLogout}
+        />
 
         {showLogin && (
           <LoginPage
             onClose={() => setShowLogin(false)}
             onForgotPassword={() => setShowLogin(false)}
+            onSuccess={handleLoginSuccess}
           />
         )}
 
@@ -186,10 +240,22 @@ export default function App() {
         <DashboardShowcase />
         <AITrustEngine />
         <SecuritySection />
-        <PricingSection />
+        <PricingSection
+          onContactClick={() => setShowContact(true)}
+          onPlanSelect={handlePlanSelect}
+        />
         <FAQSection onContactClick={() => setShowContact(true)} />
         <Footer />
       </div>
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={checkout.open}
+        onClose={() => setCheckout({ open: false })}
+        preselectedPlanId={checkout.planId}
+        preselectedCycle={checkout.cycle}
+        onNeedLogin={() => { setCheckout({ open: false }); setShowLogin(true); }}
+      />
     </>
   );
 }
