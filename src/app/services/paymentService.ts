@@ -55,7 +55,7 @@ export async function verifyPayment(payload: {
   razorpay_signature: string;
   transactionId?: string;
 }): Promise<void> {
-  const res = await fetch(`${BASE}/api/payment/verify`, {
+  const res = await fetch(`${BASE}/api/payment/verify-payment`, {
     method: 'POST',
     headers: h(),
     body: JSON.stringify(payload),
