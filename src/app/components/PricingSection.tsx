@@ -171,6 +171,7 @@ interface Feature {
 
 interface Plan {
   licenseType: string;   // LT _id, used as React key
+  licenseTypeId: string; // Inner LT _id, used for matching active license
   name: string;
   description: string;
   price: number;         // base price (monthly)
@@ -285,6 +286,7 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
 
             return {
               licenseType:    lic._id ?? '',
+              licenseTypeId:  lt._id ?? '',
               name:           name,
               description:    lt.description ?? `Best for ${name} users`,
               price:          lt.price?.amount ?? 0,
@@ -330,6 +332,7 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
     const activeLicense = currentUser?.activeLicense;
     const isCurrentPlan = activeLicense && (
       activeLicense.licenseType === plan.licenseType ||
+      activeLicense.licenseType === plan.licenseTypeId ||
       activeLicense.planName.toLowerCase() === plan.name.toLowerCase()
     );
     if (isCurrentPlan) {
@@ -523,6 +526,7 @@ export default function PricingSection({ onContactClick, onPlanSelect }: Pricing
                 const activeLicense = currentUser?.activeLicense;
                 const isCurrentPlan = activeLicense && (
                   activeLicense.licenseType === plan.licenseType ||
+                  activeLicense.licenseType === plan.licenseTypeId ||
                   activeLicense.planName.toLowerCase() === plan.name.toLowerCase()
                 );
 

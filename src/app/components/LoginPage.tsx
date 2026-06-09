@@ -294,19 +294,25 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   const strengthScore      = getStrengthScore(password);
   const passwordValid      = strengthScore === 4;
 
-  const checkActiveLicense = async (userEmail: string): Promise<boolean> => {
+  const checkActiveLicense = async (userEmail: string): Promise<{ licenseType: string; planName: string } | null> => {
     try {
       const response = await fetch(
         `${LMS_PROXY}/active-license/${encodeURIComponent(userEmail)}?productId=${PRODUCT_ID}`
       );
       if (response.ok) {
         const data = await response.json();
-        return data.activeLicense && data.activeLicense.status === "active";
+        if (data.activeLicense && data.activeLicense.status === "active") {
+          const lt = data.activeLicense.licenseTypeId ?? data.activeLicense.licenseType ?? {};
+          return {
+            licenseType: lt._id ?? "",
+            planName: lt.name ?? "Active",
+          };
+        }
       }
-      return false;
+      return null;
     } catch (error) {
       console.error("Error checking active license:", error);
-      return false;
+      return null;
     }
   };
 
@@ -314,18 +320,16 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
     window.dispatchEvent(new Event("userLoggedIn"));
     window.dispatchEvent(new Event("userLoginStatusChanged"));
 
-    const hasActiveLicense = await checkActiveLicense(userEmail);
+    const activeLicense = await checkActiveLicense(userEmail);
     
     // Save license status inside session storage user object so App.tsx reads it correctly
     const authUser = loadSession();
     if (authUser) {
-      authUser.activeLicense = hasActiveLicense
-        ? { licenseType: "6a26929078d2d302b575cc10", planName: "Active" }
-        : null;
+      authUser.activeLicense = activeLicense;
       saveSession(authUser);
     }
 
-    onLoginSuccess?.(userName, hasActiveLicense);
+    onLoginSuccess?.(userName, !!activeLicense);
     onClose?.();
   };
 
@@ -434,9 +438,9 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           justify-content: center;
           padding: 16px;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          background: rgba(10, 31, 61, 0.60);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
+          background: rgba(4, 11, 22, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           animation: lp-overlay-in 0.2s ease both;
           box-sizing: border-box;
         }
@@ -446,10 +450,12 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           width: 100%;
           max-width: 420px;
           max-height: calc(100vh - 32px);
-          border-radius: 20px;
+          border-radius: 24px;
           overflow: hidden;
           overflow-y: auto;
-          box-shadow: 0 20px 60px rgba(13,34,68,0.25), 0 4px 16px rgba(13,34,68,0.10);
+          background: linear-gradient(135deg, #091526 0%, #030811 100%);
+          border: 1px solid rgba(0, 184, 212, 0.25);
+          box-shadow: 0 24px 64px rgba(6, 13, 26, 0.6), inset 0 1px 1px rgba(255,255,255,0.1);
           position: relative;
           z-index: 1;
           animation: lp-rise 0.35s cubic-bezier(0.22,1,0.36,1) both;
@@ -465,73 +471,73 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
         }
 
         .lp-header {
-          background: linear-gradient(135deg, #00B4D8 0%, #0096B7 40%, #0D2244 100%);
-          padding: 20px 20px 16px;
+          background: linear-gradient(135deg, rgba(0,180,216,0.1) 0%, rgba(13,34,68,0.2) 100%);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          padding: 24px 24px 18px;
           position: relative;
           flex-shrink: 0;
         }
         .lp-accent-bar {
-          position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+          position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(0,184,212,0.4), transparent);
         }
         .lp-logo-row { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
         .lp-logo-icon {
           width: 34px; height: 34px;
-          background: rgba(255,255,255,0.15);
-          border: 1.5px solid rgba(255,255,255,0.25);
+          background: rgba(0,184,212,0.15);
+          border: 1.5px solid rgba(0,184,212,0.35);
           border-radius: 9px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
+          box-shadow: 0 0 12px rgba(0,184,212,0.25);
         }
         .lp-logo-name { font-size: 15px; font-weight: 800; color: white; letter-spacing: -0.01em; }
-        .lp-logo-name span { color: rgba(255,255,255,0.6); font-weight: 400; }
-        .lp-title { font-size: 18px; font-weight: 800; color: white; margin: 0 0 3px; letter-spacing: -0.02em; line-height: 1.2; }
-        .lp-sub   { font-size: 11.5px; color: rgba(255,255,255,0.58); margin: 0; line-height: 1.4; }
+        .lp-logo-name span { color: #00B4D8; font-weight: 400; }
+        .lp-title { font-size: 20px; font-weight: 900; color: white; margin: 0 0 4px; letter-spacing: -0.02em; line-height: 1.2; }
+        .lp-sub   { font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4; }
 
         .lp-close-btn {
-          position: absolute; top: 12px; right: 12px;
+          position: absolute; top: 16px; right: 16px;
           width: 28px; height: 28px; border-radius: 50%;
-          background: rgba(255,255,255,0.15);
-          border: 1px solid rgba(255,255,255,0.25);
-          color: white; cursor: pointer;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #94a3b8; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          transition: background 0.15s; padding: 0; flex-shrink: 0;
+          transition: all 0.2s; padding: 0; flex-shrink: 0;
         }
-        .lp-close-btn:hover { background: rgba(255,255,255,0.28); }
+        .lp-close-btn:hover { background: rgba(255,255,255,0.15); color: white; }
 
         .lp-body {
-          background: #F0F5FA;
-          padding: 16px 16px 20px;
+          padding: 20px 24px 28px;
           flex: 1;
         }
         .lp-form-card {
-          background: white;
-          border-radius: 14px;
-          border: 1px solid #E2EEF9;
-          padding: 16px;
-          box-shadow: 0 2px 8px rgba(13,34,68,0.05);
+          background: transparent;
+          border-radius: 0;
+          border: none;
+          padding: 0;
+          box-shadow: none;
         }
-        .lp-hint { font-size: 11px; color: #94a3b8; margin: 0 0 12px; line-height: 1.4; }
-        .lp-hint.err { color: #ef4444; font-weight: 700; }
+        .lp-hint { font-size: 11px; color: #64748b; margin: 0 0 16px; line-height: 1.4; }
 
         .lp-label {
-          display: block; font-size: 10px; font-weight: 800; color: #334155;
-          text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;
+          display: block; font-size: 10px; font-weight: 800; color: #94a3b8;
+          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;
         }
         .lp-input-icon {
-          position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-          color: #94a3b8; width: 13px; height: 13px;
+          position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+          color: rgba(148, 163, 184, 0.6); width: 13px; height: 13px;
           pointer-events: none; display: flex; align-items: center;
         }
         .lp-input {
           width: 100%; box-sizing: border-box;
-          padding: 8px 12px 8px 30px;
-          background: #F8FBFF; border: 1.5px solid #E2EEF9;
-          border-radius: 9px; font-size: 13px; color: #0D2244;
-          outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+          padding: 10px 12px 10px 32px;
+          background: rgba(10, 31, 61, 0.45); border: 1.5px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px; font-size: 13px; color: white;
+          outline: none; transition: border-color 0.2s, box-shadow 0.2s;
           -webkit-appearance: none;
         }
-        .lp-input::placeholder { color: #B0C4D8; }
+        .lp-input::placeholder { color: rgba(148, 163, 184, 0.4); }
         .lp-input.err { border-color: #ef4444 !important; }
         .lp-input::-ms-reveal, .lp-input::-ms-clear { display: none !important; }
 
@@ -539,48 +545,48 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           background: none; border: none; cursor: pointer; padding: 2px;
           color: #94a3b8; display: flex; align-items: center; transition: color 0.15s;
         }
-        .lp-eye-btn:hover { color: #0096B7; }
+        .lp-eye-btn:hover { color: #00b8d4; }
 
-        .lp-forgot-row { display: flex; justify-content: flex-end; margin-top: 3px; margin-bottom: 2px; }
+        .lp-forgot-row { display: flex; justify-content: flex-end; margin-top: 5px; margin-bottom: 2px; }
         .lp-forgot-link {
           background: none; border: none; font-size: 11px; font-weight: 700;
-          color: #00B4D8; cursor: pointer; padding: 0; transition: color 0.15s;
+          color: #00b8d4; cursor: pointer; padding: 0; transition: color 0.15s;
         }
         .lp-forgot-link:hover { color: #0096B7; text-decoration: underline; }
 
-        .lp-confirm-block { margin-top: 10px; }
+        .lp-confirm-block { margin-top: 12px; }
         .lp-match-msg { font-size: 11px; font-weight: 600; margin-top: 4px; line-height: 1.3; }
 
         .lp-submit {
-          width: 100%; padding: 11px;
-          background: linear-gradient(135deg, #00B4D8, #0096B7);
-          color: white; border: none; border-radius: 9px;
-          font-size: 13px; font-weight: 800; cursor: pointer;
+          width: 100%; padding: 12px;
+          background: linear-gradient(135deg, #00b8d4, #0097b2);
+          color: white; border: none; border-radius: 10px;
+          font-size: 14px; font-weight: 800; cursor: pointer;
           display: flex; align-items: center; justify-content: center; gap: 7px;
           transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-          margin-top: 14px;
-          box-shadow: 0 4px 14px rgba(0,180,216,0.35);
+          margin-top: 18px;
+          box-shadow: 0 4px 20px rgba(0,184,212,0.3);
           letter-spacing: 0.01em;
           -webkit-appearance: none;
         }
-        .lp-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,180,216,0.50); }
+        .lp-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,184,212,0.45); }
         .lp-submit:active:not(:disabled) { transform: translateY(0); }
         .lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .lp-toggle { text-align: center; margin-top: 12px; }
+        .lp-toggle { text-align: center; margin-top: 16px; }
         .lp-toggle-btn {
-          background: none; border: none; font-size: 12px; font-weight: 600;
-          color: #0D2244; cursor: pointer; padding: 4px 0; line-height: 1.4;
+          background: none; border: none; font-size: 12.5px; font-weight: 600;
+          color: #94a3b8; cursor: pointer; padding: 4px 0; line-height: 1.4;
         }
-        .lp-toggle-btn:hover { color: #0096B7; }
-        .lp-toggle-btn span { color: #00B4D8; }
+        .lp-toggle-btn:hover { color: white; }
+        .lp-toggle-btn span { color: #00b8d4; }
 
         .lp-trust {
           display: flex; align-items: center; justify-content: center;
-          gap: 6px; margin-top: 12px;
-          font-size: 10.5px; color: #94a3b8; font-weight: 600; letter-spacing: 0.02em;
+          gap: 6px; margin-top: 16px;
+          font-size: 11px; color: rgba(148, 163, 184, 0.5); font-weight: 600; letter-spacing: 0.02em;
         }
-        .lp-trust-dot { width: 5px; height: 5px; border-radius: 50%; background: #00B4D8; opacity: 0.5; }
+        .lp-trust-dot { width: 5px; height: 5px; border-radius: 50%; background: #00b8d4; opacity: 0.4; }
 
         .lp-spinner {
           width: 14px; height: 14px;
@@ -590,16 +596,15 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
         @keyframes lp-spin { to { transform: rotate(360deg); } }
 
         .lp-divider {
-          height: 1px; background: #E2EEF9; margin: 12px 0;
+          height: 1px; background: rgba(255,255,255,0.06); margin: 14px 0;
         }
 
         @media (max-width: 480px) {
           .lp-root { padding: 12px; }
-          .lp-card { max-width: 100%; border-radius: 16px; max-height: calc(100vh - 24px); }
-          .lp-header { padding: 16px 16px 14px; }
-          .lp-body { padding: 14px 14px 18px; }
-          .lp-form-card { padding: 14px; }
-          .lp-title { font-size: 17px; }
+          .lp-card { max-width: 100%; border-radius: 20px; max-height: calc(100vh - 24px); }
+          .lp-header { padding: 20px 20px 16px; }
+          .lp-body { padding: 16px 20px 24px; }
+          .lp-title { font-size: 18px; }
         }
       `}</style>
 
@@ -631,8 +636,8 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             {accountCreated && (
               <div
                 style={{
-                  background: "#f0fdf4",
-                  border: "1.5px solid #bbf7d0",
+                  background: "rgba(22,163,74,0.1)",
+                  border: "1.5px solid rgba(22,163,74,0.3)",
                   borderRadius: 10,
                   padding: "10px 14px",
                   marginBottom: 14,
@@ -646,7 +651,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
                     width: 28,
                     height: 28,
                     borderRadius: "50%",
-                    background: "#dcfce7",
+                    background: "rgba(22,163,74,0.2)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -656,7 +661,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
                   <svg width="12" height="12" viewBox="0 0 8 8" fill="none">
                     <path
                       d="M1.5 4L3.5 6L6.5 2"
-                      stroke="#16a34a"
+                      stroke="#4ade80"
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -664,10 +669,10 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
                   </svg>
                 </div>
                 <div>
-                  <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "#15803d" }}>
+                  <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "#4ade80" }}>
                     Account created successfully!
                   </p>
-                  <p style={{ margin: 0, fontSize: 11.5, color: "#16a34a" }}>
+                  <p style={{ margin: 0, fontSize: 11.5, color: "#86efac" }}>
                     Please sign in to continue
                   </p>
                 </div>
@@ -675,14 +680,141 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             )}
 
             {/* Error & Validation Banners */}
-            <ErrorBanner
-              message={errorMessage}
-              onDismiss={() => setErrorMessage("")}
-            />
-            <ValidationBanner
-              message={validationMessage}
-              onDismiss={() => setValidationMessage("")}
-            />
+            {errorMessage && (
+              <div
+                style={{
+                  background: "rgba(220,38,38,0.1)",
+                  border: "1.5px solid rgba(220,38,38,0.25)",
+                  borderRadius: 10,
+                  padding: "10px 12px",
+                  marginBottom: 14,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "rgba(220,38,38,0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginTop: 1,
+                  }}
+                >
+                  <AlertCircle size={14} color="#f87171" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: "#f87171",
+                    }}
+                  >
+                    Something went wrong
+                  </p>
+                  <p
+                    style={{
+                      margin: "2px 0 0 0",
+                      fontSize: 11.5,
+                      color: "#fca5a5",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {errorMessage}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage("")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#fca5a5",
+                    padding: 2,
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
+
+            {validationMessage && (
+              <div
+                style={{
+                  background: "rgba(245,158,11,0.1)",
+                  border: "1.5px solid rgba(245,158,11,0.25)",
+                  borderRadius: 10,
+                  padding: "10px 12px",
+                  marginBottom: 14,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "rgba(245,158,11,0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginTop: 1,
+                  }}
+                >
+                  <AlertCircle size={14} color="#fbbf24" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: "#fbbf24",
+                    }}
+                  >
+                    Check your details
+                  </p>
+                  <p
+                    style={{
+                      margin: "2px 0 0 0",
+                      fontSize: 11.5,
+                      color: "#fde047",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {validationMessage}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setValidationMessage("")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#fde047",
+                    padding: 2,
+                    flexShrink: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            )}
 
             <p className="lp-hint">Enter your credentials to continue</p>
 

@@ -194,6 +194,30 @@ export default function App() {
     };
   }, []);
 
+  // Fetch active license on startup if user is logged in but activeLicense is not synced
+  useEffect(() => {
+    if (user && !user.activeLicense) {
+      import('./services/authService').then(({ getActiveLicense, saveSession }) => {
+        getActiveLicense(user.email, '6a26929078d2d302b575cc10').then(data => {
+          if (data?.activeLicense?.status === 'active') {
+            const lt = data.activeLicense.licenseTypeId ?? data.activeLicense.licenseType ?? {};
+            const updated: AuthUser = {
+              ...user,
+              activeLicense: {
+                licenseType: lt._id ?? '',
+                planName:    lt.name ?? 'Active',
+              }
+            };
+            setUser(updated);
+            saveSession(updated);
+            // Notify navbar / pricing sections
+            window.dispatchEvent(new Event('planActivated'));
+          }
+        }).catch(err => console.warn('Failed to auto-fetch active license:', err));
+      });
+    }
+  }, [user]);
+
   // Checkout state
   const [checkout, setCheckout] = useState<{
     open: boolean;
