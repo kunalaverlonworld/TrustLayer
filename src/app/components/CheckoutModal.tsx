@@ -379,7 +379,9 @@ export default function CheckoutModal({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id:   response.razorpay_order_id,
               razorpay_signature:  response.razorpay_signature,
-              transactionId:       order.transactionId,
+              licenseId:           currentPlan.id,
+              userId:              user?._id ?? '',
+              billingCycle:        cycle,
             });
             onSuccess?.(currentPlan.name, currentPlan.id);
             setShowSuccess(true);

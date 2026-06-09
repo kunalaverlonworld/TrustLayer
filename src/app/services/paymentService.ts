@@ -4,13 +4,22 @@ import { LMS_PROXY } from './config';
 
 const BASE = LMS_PROXY;
 
-// TrustLayer's own secret — tell LMS admin to whitelist this as a webhook/callback secret
-export const TL_SECRET_KEY = 'tl-trustlayer-secret-2024-xK9mP3qR';
+// Razorpay backend base — same backend, different prefix
+const RAZORPAY_BASE = BASE.replace('/api/lms', '/api/razorpay');
 
-// No API key needed — the backend proxy handles it
-const h = () => ({
-  'Content-Type': 'application/json',
-});
+const h = () => ({ 'Content-Type': 'application/json' });
+
+// ── Razorpay script loader ────────────────────────────────────────────────────
+export const loadRazorpay = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) { resolve(true); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload  = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -22,17 +31,18 @@ export interface OrderResult {
   transactionId?: string;
 }
 
-// ── Create Razorpay order via backend proxy ───────────────────────────────────
+// ── Create Razorpay order (direct — no LMS pending-transaction required) ──────
+// Uses our own backend → Razorpay API directly.
 export async function createOrder(payload: {
   userId: string;
-  licenseId: string;    // lic._id (the license document ID)
+  licenseId: string;    // lic._id (the license document ID from LMS)
   billingCycle: string;
   amount: number;       // amount in paise (rupees × 100)
 }): Promise<OrderResult> {
-  const res = await fetch(`${BASE}/payment/create-order`, {
-    method: 'POST',
+  const res = await fetch(`${RAZORPAY_BASE}/create-order`, {
+    method:  'POST',
     headers: h(),
-    body: JSON.stringify(payload),
+    body:    JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -44,17 +54,20 @@ export async function createOrder(payload: {
   return data;
 }
 
-// ── Verify Razorpay payment ───────────────────────────────────────────────────
+// ── Verify Razorpay payment + activate LMS license ───────────────────────────
 export async function verifyPayment(payload: {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
+  licenseId?: string;
+  userId?: string;
+  billingCycle?: string;
   transactionId?: string;
 }): Promise<void> {
-  const res = await fetch(`${BASE}/payment/verify`, {
-    method: 'POST',
+  const res = await fetch(`${RAZORPAY_BASE}/verify`, {
+    method:  'POST',
     headers: h(),
-    body: JSON.stringify(payload),
+    body:    JSON.stringify(payload),
   });
   if (!res.ok) {
     const data = await res.json();
@@ -82,9 +95,9 @@ export async function getActiveLicense(email: string, productId: string) {
 export async function syncPasswordToLMS(email: string, passwordHash: string): Promise<void> {
   try {
     const res = await fetch(`${BASE}/password-sync`, {
-      method: 'POST',
+      method:  'POST',
       headers: h(),
-      body: JSON.stringify({ email, passwordHash }),
+      body:    JSON.stringify({ email, passwordHash }),
     });
     if (!res.ok) {
       const data = await res.json();
