@@ -216,7 +216,7 @@ export default function App() {
         <div className="min-h-screen">
            <FloatingNavbar
             onLoginClick={() => setShowLogin(true)}
-            onDashboardClick={() => window.open('https://app.trustlayer.io/dashboard', '_blank')}
+            onDashboardClick={() => window.open('https://trustlayer-backend-d3as.onrender.com/dashboard', '_blank')}
           />
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
@@ -240,7 +240,7 @@ export default function App() {
       <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f0f2a] to-[#0a0a1a] text-white">
         <FloatingNavbar
           onLoginClick={() => setShowLogin(true)}
-          onDashboardClick={() => window.open('https://app.trustlayer.io/dashboard', '_blank')}
+          onDashboardClick={() => window.open('https://trustlayer-backend-d3as.onrender.com/dashboard', '_blank')}
         />
 
         {showLogin && (
@@ -283,6 +283,8 @@ export default function App() {
             };
             setUser(updated);
             saveSession(updated);
+            // Notify navbar to show Dashboard button immediately
+            window.dispatchEvent(new Event('planActivated'));
           }
         }}
       />

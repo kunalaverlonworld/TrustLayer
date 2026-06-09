@@ -26,11 +26,24 @@ interface User {
   source: string;
 }
 
+// Read active license status from sessionStorage (written by authService)
+function getActiveLicense(): { planName: string; licenseType: string } | null {
+  try {
+    const raw = sessionStorage.getItem('tl_auth_user');
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user?.activeLicense ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function FloatingNavbar({ onLoginClick, onDashboardClick }: FloatingNavbarProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [scrolled, setScrolled]       = useState(false);
+  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [user, setUser]               = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hasLicense, setHasLicense]   = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -48,17 +61,26 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
         console.error('Failed to parse user:', e);
       }
     }
+    // Read license status
+    setHasLicense(!!getActiveLicense());
 
-    // Listen for login events
-    const handleUserLogin = () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    // Listen for login and plan-purchase events
+    const refreshUser = () => {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try { setUser(JSON.parse(stored)); } catch {}
       }
+      setHasLicense(!!getActiveLicense());
     };
 
-    window.addEventListener('userLoggedIn', handleUserLogin);
-    return () => window.removeEventListener('userLoggedIn', handleUserLogin);
+    window.addEventListener('userLoggedIn', refreshUser);
+    window.addEventListener('userLoggedOut', () => { setUser(null); setHasLicense(false); });
+    window.addEventListener('planActivated', refreshUser); // fired after checkout success
+    return () => {
+      window.removeEventListener('userLoggedIn', refreshUser);
+      window.removeEventListener('userLoggedOut', () => {});
+      window.removeEventListener('planActivated', refreshUser);
+    };
   }, []);
 
   const links: { label: string; id: string }[] = [
@@ -212,24 +234,34 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
                         {user.email}
                       </div>
 
-                      {/* Dashboard option */}
-                      <button
-                        onClick={handleDashboard}
-                        style={{
-                          width: '100%', textAlign: 'left',
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 14, fontWeight: 500, color: C.body,
-                          padding: '12px 16px',
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          transition: 'background 0.2s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                      >
-                        <LayoutDashboard size={16} color={C.teal} />
-                        <span>Dashboard</span>
-                      </button>
+                      {/* Dashboard option — only if user has an active license */}
+                      {hasLicense && (
+                        <button
+                          onClick={handleDashboard}
+                          style={{
+                            width: '100%', textAlign: 'left',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: 14, fontWeight: 500, color: C.body,
+                            padding: '12px 16px',
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            transition: 'background 0.2s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                        >
+                          <LayoutDashboard size={16} color={C.teal} />
+                          <span>Dashboard</span>
+                          <span style={{
+                            marginLeft: 'auto',
+                            fontSize: 10, fontWeight: 700,
+                            background: `linear-gradient(135deg,${C.teal},${C.tealDark})`,
+                            color: 'white', padding: '2px 7px', borderRadius: 99,
+                          }}>
+                            {getActiveLicense()?.planName || 'Active'}
+                          </span>
+                        </button>
+                      )}
 
                       {/* Sign out option */}
                       <button
@@ -344,17 +376,21 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
                   }}>
                     Hi, {user.name}
                   </div>
-                  <button
-                    onClick={handleDashboard}
-                    style={{
-                      background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 14, fontWeight: 600, color: C.navy,
-                      padding: '10px', borderRadius: 100, transition: 'border-color 0.2s',
-                    }}
-                  >
-                    Dashboard
-                  </button>
+                  {hasLicense && (
+                    <button
+                      onClick={handleDashboard}
+                      style={{
+                        background: 'none', border: `1.5px solid ${C.border}`, cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 14, fontWeight: 600, color: C.navy,
+                        padding: '10px', borderRadius: 100, transition: 'border-color 0.2s',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}
+                    >
+                      <LayoutDashboard size={15} color={C.teal} />
+                      Dashboard
+                    </button>
+                  )}
                   <button
                     onClick={handleSignOut}
                     style={{
