@@ -389,6 +389,9 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
       try {
         const authUser = await lmsLogin({ email, password });
 
+        // Save to sessionStorage so App.tsx can read user via loadSession()
+        saveSession(authUser);
+
         const user = {
           name: authUser.name || email.split("@")[0],
           email: authUser.email || email,
