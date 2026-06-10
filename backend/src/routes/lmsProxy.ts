@@ -84,7 +84,7 @@ router.get("/active-license/:email", async (req: Request, res: Response) => {
     const productId = (req.query.productId as string) || PRODUCT_ID;
     const { status, data } = await proxyToLMS(
       "GET",
-      `/api/external/actve-license/${encodeURIComponent(email)}?productId=${productId}`
+      `/api/external/active-license/${encodeURIComponent(email)}?productId=${productId}`
     );
     return res.status(status).json(data);
   } catch (err: any) {
