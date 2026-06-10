@@ -12,7 +12,7 @@ export const PRODUCT_ID  = '6a26929078d2d302b575cc10';
 
 export const getDashboardUrl = (): string => {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:5173';
+    return 'http://localhost:5174';
   }
   return _env.VITE_DASHBOARD_URL || 'https://trustlayer-frontend.onrender.com';
 };
