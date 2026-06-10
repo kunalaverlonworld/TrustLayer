@@ -194,6 +194,19 @@ export default function App() {
     };
   }, []);
 
+  // Handle redirect back from dashboard after sign-out (?loggedOut=1)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('loggedOut') === '1') {
+      clearSession();
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      setUser(null);
+      // Clean the URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Fetch active license on startup if user is logged in but activeLicense is not synced
   useEffect(() => {
     if (user && !user.activeLicense) {
