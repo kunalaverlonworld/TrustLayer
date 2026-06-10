@@ -154,8 +154,10 @@ export async function triggerSSORedirect(user: AuthUser): Promise<void> {
     });
 
     if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      console.error('[SSO Debug] Response not OK:', response.status, errData);
       if (newWindow) newWindow.close();
-      throw new Error('SSO initiation failed');
+      throw new Error(`SSO initiation failed: ${errData.error || errData.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
