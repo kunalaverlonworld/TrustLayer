@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, LayoutDashboard, User, CreditCard } from 'lucide-react';
 
 const C = {
   bg:       '#edf5fb',
@@ -43,11 +43,12 @@ function getActiveLicense(): { planName: string; licenseType: string } | null {
 }
 
 export default function FloatingNavbar({ onLoginClick, onDashboardClick }: FloatingNavbarProps) {
-  const [scrolled, setScrolled]       = useState(false);
-  const [mobileOpen, setMobileOpen]   = useState(false);
-  const [user, setUser]               = useState<User | null>(null);
+  const [scrolled, setScrolled]         = useState(false);
+  const [mobileOpen, setMobileOpen]     = useState(false);
+  const [user, setUser]                 = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [hasLicense, setHasLicense]   = useState(false);
+  const [hasLicense, setHasLicense]     = useState(false);
+  const [showProfile, setShowProfile]   = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -118,6 +119,20 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
     setDropdownOpen(false);
     onDashboardClick?.();
   };
+
+  const handleManagePlan = () => {
+    setDropdownOpen(false);
+    const el = document.getElementById('pricing');
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+  };
+
+  const handleMyProfile = () => {
+    setDropdownOpen(false);
+    setShowProfile(true);
+  };
+
+  // Helper — initials avatar
+  const initials = user ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '';
 
   return (
     <>
@@ -220,72 +235,150 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
                       style={{
                         position: 'absolute', top: 60, right: 0,
                         background: 'white',
-                        borderRadius: 12,
+                        borderRadius: 16,
                         border: `1px solid ${C.border}`,
-                        boxShadow: `0 12px 32px ${C.shadow}`,
+                        boxShadow: '0 16px 48px rgba(10,31,61,0.13)',
                         overflow: 'hidden',
-                        minWidth: 200,
+                        minWidth: 240,
                       }}
                     >
-                      {/* Email display */}
+                      {/* User header */}
                       <div style={{
-                        padding: '12px 16px',
+                        padding: '16px',
+                        background: 'linear-gradient(135deg,#f0f7ff,#e8f4fb)',
                         borderBottom: `1px solid ${C.border}`,
-                        fontSize: 12,
-                        color: C.muted,
-                        fontWeight: 500,
+                        display: 'flex', alignItems: 'center', gap: 12,
                       }}>
-                        {user.email}
+                        <div style={{
+                          width: 40, height: 40, borderRadius: '50%',
+                          background: `linear-gradient(135deg,${C.teal},${C.tealDark})`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 14, fontWeight: 800, color: 'white', flexShrink: 0,
+                          boxShadow: '0 4px 12px rgba(0,184,212,0.3)',
+                        }}>{initials}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {user?.name}
+                          </div>
+                          <div style={{ fontSize: 11, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {user?.email}
+                          </div>
+                          {hasLicense && (
+                            <div style={{
+                              marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4,
+                              background: `linear-gradient(135deg,${C.teal},${C.tealDark})`,
+                              color: 'white', fontSize: 9, fontWeight: 800,
+                              padding: '2px 8px', borderRadius: 99, letterSpacing: '0.05em',
+                            }}>
+                              ✦ {(getActiveLicense()?.planName || 'Active').toUpperCase()} PLAN
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Dashboard option — only if user has an active license */}
-                      {hasLicense && (
+                      {/* Menu items */}
+                      <div style={{ padding: '6px 0' }}>
+
+                        {/* My Profile */}
                         <button
-                          onClick={handleDashboard}
+                          onClick={handleMyProfile}
                           style={{
                             width: '100%', textAlign: 'left',
                             background: 'none', border: 'none', cursor: 'pointer',
                             fontFamily: "'Inter', sans-serif",
-                            fontSize: 14, fontWeight: 500, color: C.body,
-                            padding: '12px 16px',
+                            fontSize: 13.5, fontWeight: 500, color: C.body,
+                            padding: '10px 16px',
                             display: 'flex', alignItems: 'center', gap: 10,
-                            transition: 'background 0.2s',
+                            transition: 'background 0.15s',
                           }}
                           onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
                           onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                         >
-                          <LayoutDashboard size={16} color={C.teal} />
-                          <span>Dashboard</span>
-                          <span style={{
-                            marginLeft: 'auto',
-                            fontSize: 10, fontWeight: 700,
-                            background: `linear-gradient(135deg,${C.teal},${C.tealDark})`,
-                            color: 'white', padding: '2px 7px', borderRadius: 99,
-                          }}>
-                            {getActiveLicense()?.planName || 'Active'}
-                          </span>
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: '#f0f7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <User size={14} color={C.teal} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: C.navy }}>My Profile</div>
+                            <div style={{ fontSize: 11, color: C.muted }}>View account details</div>
+                          </div>
                         </button>
-                      )}
 
-                      {/* Sign out option */}
-                      <button
-                        onClick={handleSignOut}
-                        style={{
-                          width: '100%', textAlign: 'left',
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 14, fontWeight: 500, color: '#ef4444',
-                          padding: '12px 16px',
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          transition: 'background 0.2s',
-                          borderTop: `1px solid ${C.border}`,
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#fff5f5')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                      >
-                        <LogOut size={16} />
-                        <span>Sign Out</span>
-                      </button>
+                        {/* Manage Plan */}
+                        <button
+                          onClick={handleManagePlan}
+                          style={{
+                            width: '100%', textAlign: 'left',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: 13.5, fontWeight: 500, color: C.body,
+                            padding: '10px 16px',
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                        >
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: '#f0fff4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CreditCard size={14} color='#10b981' />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, color: C.navy }}>Manage Plan</div>
+                            <div style={{ fontSize: 11, color: C.muted }}>Upgrade or change plan</div>
+                          </div>
+                        </button>
+
+                        {/* Dashboard — only with active license */}
+                        {hasLicense && (
+                          <button
+                            onClick={handleDashboard}
+                            style={{
+                              width: '100%', textAlign: 'left',
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              fontFamily: "'Inter', sans-serif",
+                              fontSize: 13.5, fontWeight: 500, color: C.body,
+                              padding: '10px 16px',
+                              display: 'flex', alignItems: 'center', gap: 10,
+                              transition: 'background 0.15s',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                          >
+                            <div style={{ width: 30, height: 30, borderRadius: 8, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <LayoutDashboard size={14} color='#3b82f6' />
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, color: C.navy }}>Dashboard</div>
+                              <div style={{ fontSize: 11, color: C.muted }}>Open AI analytics</div>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Sign out */}
+                      <div style={{ borderTop: `1px solid ${C.border}`, padding: '6px 0' }}>
+                        <button
+                          onClick={handleSignOut}
+                          style={{
+                            width: '100%', textAlign: 'left',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontFamily: "'Inter', sans-serif",
+                            fontSize: 13.5, fontWeight: 500, color: '#ef4444',
+                            padding: '10px 16px',
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#fff5f5')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                        >
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <LogOut size={14} color='#ef4444' />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>Sign Out</div>
+                            <div style={{ fontSize: 11, color: '#fca5a5' }}>End your session</div>
+                          </div>
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -442,6 +535,126 @@ export default function FloatingNavbar({ onLoginClick, onDashboardClick }: Float
           .nav-mobile-btn { display: block !important; }
         }
       `}</style>
+
+      {/* ── Profile Modal ─────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showProfile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowProfile(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 200,
+              background: 'rgba(10,31,61,0.45)', backdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 24, fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.16,1,0.3,1] }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'white', borderRadius: 20,
+                boxShadow: '0 24px 80px rgba(10,31,61,0.18)',
+                width: '100%', maxWidth: 420, overflow: 'hidden',
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                background: 'linear-gradient(135deg,#0a1f3d,#1565c0)',
+                padding: '32px 24px 24px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                position: 'relative',
+              }}>
+                <button
+                  onClick={() => setShowProfile(false)}
+                  style={{
+                    position: 'absolute', top: 16, right: 16,
+                    background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
+                    color: 'white', borderRadius: 8, width: 32, height: 32,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                ><X size={16} /></button>
+
+                {/* Avatar */}
+                <div style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: 'linear-gradient(135deg,#00b8d4,#0097b2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 26, fontWeight: 800, color: 'white',
+                  boxShadow: '0 8px 24px rgba(0,184,212,0.4)',
+                  border: '3px solid rgba(255,255,255,0.3)',
+                }}>{initials}</div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: 'white' }}>{user?.name}</div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>{user?.email}</div>
+                </div>
+
+                {hasLicense && (
+                  <div style={{
+                    background: 'linear-gradient(135deg,#00b8d4,#0097b2)',
+                    color: 'white', fontSize: 10, fontWeight: 800,
+                    padding: '4px 14px', borderRadius: 99, letterSpacing: '0.08em',
+                    boxShadow: '0 4px 12px rgba(0,184,212,0.4)',
+                  }}>
+                    ✦ {(getActiveLicense()?.planName || 'Active').toUpperCase()} PLAN
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div style={{ padding: '24px' }}>
+                {[
+                  { label: 'Full Name',   value: user?.name  || '—' },
+                  { label: 'Email',       value: user?.email || '—' },
+                  { label: 'Account ID',  value: user?.customerId ? `#${user.customerId.slice(-8).toUpperCase()}` : '—' },
+                  { label: 'Current Plan', value: getActiveLicense()?.planName || 'No active plan' },
+                ].map(row => (
+                  <div key={row.label} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #f1f5f9',
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{row.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#0a1f3d', maxWidth: '60%', textAlign: 'right', wordBreak: 'break-all' }}>{row.value}</span>
+                  </div>
+                ))}
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button
+                    onClick={() => { setShowProfile(false); handleManagePlan(); }}
+                    style={{
+                      flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer',
+                      background: 'linear-gradient(135deg,#00b8d4,#0097b2)',
+                      border: 'none', color: 'white', fontSize: 13, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <CreditCard size={14} /> Manage Plan
+                  </button>
+                  <button
+                    onClick={() => { setShowProfile(false); handleSignOut(); }}
+                    style={{
+                      flex: 1, padding: '11px', borderRadius: 12, cursor: 'pointer',
+                      background: '#fff5f5', border: '1.5px solid #fecdd3',
+                      color: '#ef4444', fontSize: 13, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <LogOut size={14} /> Sign Out
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
