@@ -6,7 +6,19 @@ const LMS_BASE   = process.env.LMS_BASE || "https://license-system-v6ht.onrender
 const LMS_API_KEY = process.env.LMS_API_KEY || "my-secret-key-123";
 const PRODUCT_ID  = "6a26929078d2d302b575cc10";
 
-// Helper: forward a request to LMS and relay the response
+const LMS_TIMEOUT_MS = 8000;  // 8 s per attempt
+const LMS_MAX_RETRIES = 3;    // total attempts for network errors / 5xx
+
+// Wrap fetch with a timeout signal
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+// Helper: forward a request to LMS with timeout + exponential-backoff retries.
+// Retries on:  network errors (fetch throws) and 5xx LMS responses.
+// Passes through immediately: 4xx responses (client errors — no point retrying).
 async function proxyToLMS(
   method: string,
   path: string,
@@ -19,21 +31,49 @@ async function proxyToLMS(
     "x-api-key": LMS_API_KEY,
     ...(extraHeaders ?? {}),
   };
-
   const fetchOptions: RequestInit = {
     method,
     headers,
     ...(body ? { body: JSON.stringify(body) } : {}),
   };
 
-  const res = await fetch(url, fetchOptions);
-  let data: unknown;
-  try {
-    data = await res.json();
-  } catch {
-    data = { message: "No JSON body" };
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= LMS_MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, fetchOptions, LMS_TIMEOUT_MS);
+
+      // Don't retry 4xx — those are client mistakes
+      if (res.status >= 400 && res.status < 500) {
+        let data: unknown;
+        try { data = await res.json(); } catch { data = { message: "No JSON body" }; }
+        return { status: res.status, data };
+      }
+
+      // 5xx — log and retry
+      if (res.status >= 500) {
+        console.warn(`[LMSProxy] attempt ${attempt}/${LMS_MAX_RETRIES} — LMS returned ${res.status} for ${method} ${path}`);
+        lastError = new Error(`LMS ${res.status}`);
+      } else {
+        // 2xx / 3xx — success
+        let data: unknown;
+        try { data = await res.json(); } catch { data = { message: "No JSON body" }; }
+        return { status: res.status, data };
+      }
+    } catch (err: any) {
+      const reason = err?.name === "AbortError" ? `timeout after ${LMS_TIMEOUT_MS}ms` : err?.message;
+      console.warn(`[LMSProxy] attempt ${attempt}/${LMS_MAX_RETRIES} — network error: ${reason} for ${method} ${path}`);
+      lastError = err;
+    }
+
+    // Exponential backoff before next attempt: 500ms, 1000ms, 2000ms …
+    if (attempt < LMS_MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt - 1)));
+    }
   }
-  return { status: res.status, data };
+
+  console.error(`[LMSProxy] all ${LMS_MAX_RETRIES} attempts failed for ${method} ${path}`, lastError);
+  return { status: 502, data: { success: false, message: "LMS service unavailable after retries" } };
 }
 
 // ── POST /api/lms/login ────────────────────────────────────────────────────────
