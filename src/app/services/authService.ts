@@ -135,7 +135,7 @@ export async function triggerSSORedirect(user: AuthUser): Promise<void> {
   const newWindow = window.open('about:blank', '_blank');
 
   try {
-    const activePlan = user.activeLicense?.planName ?? 'basic';
+    const activePlan = (user.activeLicense?.planName ?? 'basic').toLowerCase().trim();
     const licenseId = user.activeLicense?.licenseType ?? '';
 
     const ssoBackendUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
