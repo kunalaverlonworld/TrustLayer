@@ -317,17 +317,21 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   };
 
   const handlePostLoginActions = async (userEmail: string, userName: string) => {
-    window.dispatchEvent(new Event("userLoggedIn"));
-    window.dispatchEvent(new Event("userLoginStatusChanged"));
-
+    // Fetch active license FIRST, then save and notify — avoids race where navbar
+    // reads sessionStorage before activeLicense is written.
     const activeLicense = await checkActiveLicense(userEmail);
-    
+
     // Save license status inside session storage user object so App.tsx reads it correctly
     const authUser = loadSession();
     if (authUser) {
       authUser.activeLicense = activeLicense;
       saveSession(authUser);
     }
+
+    // Only NOW notify listeners — sessionStorage has the full user + activeLicense
+    window.dispatchEvent(new Event("userLoggedIn"));
+    window.dispatchEvent(new Event("userLoginStatusChanged"));
+    if (activeLicense) window.dispatchEvent(new Event("planActivated"));
 
     onLoginSuccess?.(userName, !!activeLicense);
     onClose?.();
