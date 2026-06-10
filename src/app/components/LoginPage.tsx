@@ -5,6 +5,7 @@ import {
   lmsRegister,
   saveSession,
   loadSession,
+  loadSavedPlan,
 } from "../services/authService";
 import { LMS_PROXY, PRODUCT_ID } from "../services/config";
 
@@ -319,7 +320,12 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   const handlePostLoginActions = async (userEmail: string, userName: string) => {
     // Fetch active license FIRST, then save and notify — avoids race where navbar
     // reads sessionStorage before activeLicense is written.
-    const activeLicense = await checkActiveLicense(userEmail);
+    let activeLicense = await checkActiveLicense(userEmail);
+
+    // Fallback: restore plan from localStorage if LMS call failed / returned nothing
+    if (!activeLicense) {
+      activeLicense = loadSavedPlan();
+    }
 
     // Save license status inside session storage user object so App.tsx reads it correctly
     const authUser = loadSession();

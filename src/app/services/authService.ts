@@ -109,17 +109,38 @@ export async function getActiveLicense(email: string, productId: string) {
   }
 }
 
-// ── Persist to sessionStorage ─────────────────────────────────────────────────
-const STORAGE_KEY = 'tl_auth_user';
+// ── Persist to sessionStorage + localStorage (plan survives logout) ───────────
+const STORAGE_KEY  = 'tl_auth_user';
+const PLAN_KEY     = 'tl_active_license';  // persists across logout
 
 export function saveSession(user: AuthUser) {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  // Keep plan in localStorage so re-login can restore it without an LMS round-trip
+  if (user.activeLicense) {
+    localStorage.setItem(PLAN_KEY, JSON.stringify(user.activeLicense));
+  }
 }
 
 export function loadSession(): AuthUser | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
+    if (!raw) return null;
+    const user = JSON.parse(raw) as AuthUser;
+    // If session exists but has no plan, restore from localStorage backup
+    if (!user.activeLicense) {
+      const planRaw = localStorage.getItem(PLAN_KEY);
+      if (planRaw) user.activeLicense = JSON.parse(planRaw);
+    }
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+export function loadSavedPlan(): { licenseType: string; planName: string } | null {
+  try {
+    const raw = localStorage.getItem(PLAN_KEY);
+    return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
@@ -127,6 +148,7 @@ export function loadSession(): AuthUser | null {
 
 export function clearSession() {
   sessionStorage.removeItem(STORAGE_KEY);
+  // NOTE: intentionally NOT clearing PLAN_KEY so plan survives logout → re-login
 }
 
 // ── SSO Redirect to Dashboard ──────────────────────────────────────────────────

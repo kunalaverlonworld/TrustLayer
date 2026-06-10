@@ -14,7 +14,7 @@ import { ContactSupport } from './components/ContactSupport';
 import Footer from './components/Footer';
 import './styles.css';
 import LoginPage from './components/LoginPage';
-import { loadSession, saveSession, clearSession, triggerSSORedirect, type AuthUser } from './services/authService';
+import { loadSession, saveSession, clearSession, triggerSSORedirect, loadSavedPlan, type AuthUser } from './services/authService';
 import CheckoutModal from './components/CheckoutModal';
 import { Toaster } from './components/ui/sonner';
 
@@ -166,7 +166,7 @@ export default function App() {
           name:          lsUser.name || '',
           email:         lsUser.email || '',
           token:         '',
-          activeLicense: null,
+          activeLicense: loadSavedPlan(),   // restore plan from localStorage backup
         };
         // Persist to sessionStorage so future calls to loadSession() work
         saveSession(authUser);

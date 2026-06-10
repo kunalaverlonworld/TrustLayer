@@ -26,13 +26,17 @@ interface User {
   source: string;
 }
 
-// Read active license status from sessionStorage (written by authService)
+// Read active license status — checks sessionStorage first, then localStorage backup
 function getActiveLicense(): { planName: string; licenseType: string } | null {
   try {
     const raw = sessionStorage.getItem('tl_auth_user');
-    if (!raw) return null;
-    const user = JSON.parse(raw);
-    return user?.activeLicense ?? null;
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user?.activeLicense) return user.activeLicense;
+    }
+    // Fallback: plan persisted to localStorage across logout
+    const planRaw = localStorage.getItem('tl_active_license');
+    return planRaw ? JSON.parse(planRaw) : null;
   } catch {
     return null;
   }
