@@ -138,7 +138,11 @@ export async function triggerSSORedirect(user: AuthUser): Promise<void> {
     const activePlan = user.activeLicense?.planName ?? 'basic';
     const licenseId = user.activeLicense?.licenseType ?? '';
 
-    const response = await fetch(`${BACKEND_URL}/api/auth/sso`, {
+    const ssoBackendUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+      ? 'http://localhost:5000'
+      : BACKEND_URL;
+
+    const response = await fetch(`${ssoBackendUrl}/api/auth/sso`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
