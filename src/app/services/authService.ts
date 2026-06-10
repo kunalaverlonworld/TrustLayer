@@ -131,27 +131,41 @@ export function clearSession() {
 
 // ── SSO Redirect to Dashboard ──────────────────────────────────────────────────
 export async function triggerSSORedirect(user: AuthUser): Promise<void> {
-  const activePlan = user.activeLicense?.planName ?? 'basic';
-  const licenseId = user.activeLicense?.licenseType ?? '';
+  // Open blank window immediately to prevent browser popup blocker
+  const newWindow = window.open('about:blank', '_blank');
 
-  const response = await fetch(`${BACKEND_URL}/api/auth/sso`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: user.email,
-      name: user.name,
-      planName: activePlan,
-      licenseId: licenseId,
-    }),
-  });
+  try {
+    const activePlan = user.activeLicense?.planName ?? 'basic';
+    const licenseId = user.activeLicense?.licenseType ?? '';
 
-  if (!response.ok) {
-    throw new Error('SSO initiation failed');
+    const response = await fetch(`${BACKEND_URL}/api/auth/sso`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: user.email,
+        name: user.name,
+        planName: activePlan,
+        licenseId: licenseId,
+      }),
+    });
+
+    if (!response.ok) {
+      if (newWindow) newWindow.close();
+      throw new Error('SSO initiation failed');
+    }
+
+    const data = await response.json();
+    const dashboardUrl = getDashboardUrl();
+
+    const ssoUrl = `${dashboardUrl}/sso?token=${encodeURIComponent(data.token)}&plan=${encodeURIComponent(data.planName)}&licenseId=${encodeURIComponent(data.licenseId)}`;
+    
+    if (newWindow) {
+      newWindow.location.href = ssoUrl;
+    } else {
+      window.location.href = ssoUrl;
+    }
+  } catch (err) {
+    if (newWindow) newWindow.close();
+    throw err;
   }
-
-  const data = await response.json();
-  const dashboardUrl = getDashboardUrl();
-
-  const ssoUrl = `${dashboardUrl}/sso?token=${encodeURIComponent(data.token)}&plan=${encodeURIComponent(data.planName)}&licenseId=${encodeURIComponent(data.licenseId)}`;
-  window.open(ssoUrl, '_blank');
 }
