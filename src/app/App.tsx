@@ -202,6 +202,7 @@ export default function App() {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       setUser(null);
+      window.dispatchEvent(new Event('userLoggedOut'));
       // Clean the URL
       window.history.replaceState({}, '', window.location.pathname);
     }
