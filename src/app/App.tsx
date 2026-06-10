@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import FloatingNavbar from './components/FloatingNavbar';
+import { AnimatePresence } from 'motion/react';
 import HeroSection from './components/HeroSection';
 import TrustAnalytics from './components/TrustAnalytics';
 import FeaturesSection from './components/FeaturesSection';
@@ -313,13 +314,15 @@ export default function App() {
           <div style={{ paddingTop: 68 }}>
             <ContactSupport onBack={() => setShowContact(false)} />
           </div>
-          {showLogin && (
-            <LoginPage
-              onClose={() => setShowLogin(false)}
-              onForgotPassword={() => setShowLogin(false)}
-              onLoginSuccess={handleLoginSuccess}
-            />
-          )}
+          <AnimatePresence>
+            {showLogin && (
+              <LoginPage
+                onClose={() => setShowLogin(false)}
+                onForgotPassword={() => setShowLogin(false)}
+                onLoginSuccess={handleLoginSuccess}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </>
     );
@@ -343,13 +346,15 @@ export default function App() {
           }}
         />
 
-        {showLogin && (
-          <LoginPage
-            onClose={() => setShowLogin(false)}
-            onForgotPassword={() => setShowLogin(false)}
-            onLoginSuccess={handleLoginSuccess}
-          />
-        )}
+        <AnimatePresence>
+          {showLogin && (
+            <LoginPage
+              onClose={() => setShowLogin(false)}
+              onForgotPassword={() => setShowLogin(false)}
+              onLoginSuccess={handleLoginSuccess}
+            />
+          )}
+        </AnimatePresence>
 
         <HeroSection onBookDemo={() => setShowContact(true)} />
         <TrustAnalytics />

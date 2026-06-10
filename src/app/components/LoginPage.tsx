@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   lmsLogin,
   lmsRegister,
@@ -11,6 +12,8 @@ import { LMS_PROXY, PRODUCT_ID } from "../services/config";
 
 // ─── Error Banner ──────────────────────────────────────────────────────────
 
+// ─── Error Banner ──────────────────────────────────────────────────────────
+
 function ErrorBanner({
   message,
   onDismiss,
@@ -18,73 +21,81 @@ function ErrorBanner({
   message: string;
   onDismiss: () => void;
 }) {
-  return message ? (
-    <div
-      style={{
-        background: "#fff1f2",
-        border: "1.5px solid #fecdd3",
-        borderRadius: 10,
-        padding: "10px 12px",
-        marginBottom: 14,
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 10,
-      }}
-    >
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: "#ffe4e6",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          marginTop: 1,
-        }}
-      >
-        <AlertCircle size={14} color="#e11d48" />
-      </div>
-      <div style={{ flex: 1 }}>
-        <p
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: -6 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           style={{
-            margin: 0,
-            fontSize: 12.5,
-            fontWeight: 700,
-            color: "#be123c",
+            background: "rgba(220,38,38,0.1)",
+            border: "1.5px solid rgba(220,38,38,0.25)",
+            borderRadius: 10,
+            padding: "10px 12px",
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
           }}
         >
-          Something went wrong
-        </p>
-        <p
-          style={{
-            margin: "2px 0 0 0",
-            fontSize: 11.5,
-            color: "#e11d48",
-            lineHeight: 1.45,
-          }}
-        >
-          {message}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onDismiss}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#fda4af",
-          padding: 2,
-          flexShrink: 0,
-          lineHeight: 1,
-        }}
-      >
-        <X size={13} />
-      </button>
-    </div>
-  ) : null;
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "rgba(220,38,38,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              marginTop: 1,
+            }}
+          >
+            <AlertCircle size={14} color="#f87171" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: "#f87171",
+              }}
+            >
+              Something went wrong
+            </p>
+            <p
+              style={{
+                margin: "2px 0 0 0",
+                fontSize: 11.5,
+                color: "#fca5a5",
+                lineHeight: 1.45,
+              }}
+            >
+              {message}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#fca5a5",
+              padding: 2,
+              flexShrink: 0,
+              lineHeight: 1,
+            }}
+          >
+            <X size={13} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
 
 function ValidationBanner({
@@ -94,73 +105,141 @@ function ValidationBanner({
   message: string;
   onDismiss: () => void;
 }) {
-  return message ? (
-    <div
-      style={{
-        background: "#fffbeb",
-        border: "1.5px solid #fde68a",
-        borderRadius: 10,
-        padding: "10px 12px",
-        marginBottom: 14,
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 10,
-      }}
-    >
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          background: "#fef3c7",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          marginTop: 1,
-        }}
-      >
-        <AlertCircle size={14} color="#d97706" />
-      </div>
-      <div style={{ flex: 1 }}>
-        <p
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: -6 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           style={{
-            margin: 0,
-            fontSize: 12.5,
-            fontWeight: 700,
-            color: "#b45309",
+            background: "rgba(245,158,11,0.1)",
+            border: "1.5px solid rgba(245,158,11,0.25)",
+            borderRadius: 10,
+            padding: "10px 12px",
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
           }}
         >
-          Check your details
-        </p>
-        <p
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "rgba(245,158,11,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              marginTop: 1,
+            }}
+          >
+            <AlertCircle size={14} color="#fbbf24" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: "#fbbf24",
+              }}
+            >
+              Check your details
+            </p>
+            <p
+              style={{
+                margin: "2px 0 0 0",
+                fontSize: 11.5,
+                color: "#fde047",
+                lineHeight: 1.45,
+              }}
+            >
+              {message}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#fde047",
+              padding: 2,
+              flexShrink: 0,
+              lineHeight: 1,
+            }}
+          >
+            <X size={13} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function AccountCreatedBanner({
+  active,
+}: {
+  active: boolean;
+}) {
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: -6 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           style={{
-            margin: "2px 0 0 0",
-            fontSize: 11.5,
-            color: "#d97706",
-            lineHeight: 1.45,
+            background: "rgba(22,163,74,0.1)",
+            border: "1.5px solid rgba(22,163,74,0.3)",
+            borderRadius: 10,
+            padding: "10px 14px",
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
           }}
         >
-          {message}
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onDismiss}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#fcd34d",
-          padding: 2,
-          flexShrink: 0,
-          lineHeight: 1,
-        }}
-      >
-        <X size={13} />
-      </button>
-    </div>
-  ) : null;
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "rgba(22,163,74,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 8 8" fill="none">
+              <path
+                d="M1.5 4L3.5 6L6.5 2"
+                stroke="#4ade80"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "#4ade80" }}>
+              Account created successfully!
+            </p>
+            <p style={{ margin: 0, fontSize: 11.5, color: "#86efac" }}>
+              Please sign in to continue
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
 
 // ─── Password strength ────────────────────────────────────────────────────────────
@@ -170,7 +249,6 @@ function getStrengthScore(pw: string) {
 }
 
 function PasswordStrength({ password }: { password: string }) {
-  if (!password) return null;
   const checks = [
     { label: "8+ chars",  ok: password.length >= 8 },
     { label: "Uppercase", ok: /[A-Z]/.test(password) },
@@ -180,30 +258,51 @@ function PasswordStrength({ password }: { password: string }) {
   const score = checks.filter((c) => c.ok).length;
   const barColor = score <= 1 ? "#f87171" : score === 2 ? "#fb923c" : score === 3 ? "#facc15" : "#4ade80";
   const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][score];
+
   return (
-    <div style={{ margin: "8px 0 10px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-        <div style={{ display: "flex", flex: 1, gap: 3 }}>
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} style={{ height: 3, flex: 1, borderRadius: 2, background: i <= score ? barColor : "#E2EEF9", transition: "background 0.25s" }} />
-          ))}
-        </div>
-        <span style={{ fontSize: 10, fontWeight: 700, color: barColor, minWidth: 32 }}>{strengthLabel}</span>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-        {checks.map((c) => (
-          <span key={c.label} style={{
-            fontSize: 10, padding: "2px 7px", borderRadius: 20,
-            border: `1px solid ${c.ok ? "#00B4D8" : "#E2EEF9"}`,
-            background: c.ok ? "rgba(0,180,216,0.08)" : "transparent",
-            color: c.ok ? "#0096B7" : "#94a3b8",
-            fontWeight: 600, transition: "all 0.2s",
-          }}>
-            {c.ok ? "✓ " : ""}{c.label}
-          </span>
-        ))}
-      </div>
-    </div>
+    <AnimatePresence>
+      {password && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15 }}
+          style={{ margin: "8px 0 10px" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+            <div style={{ display: "flex", flex: 1, gap: 3 }}>
+              {[1, 2, 3, 4].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ background: i <= score ? barColor : "rgba(255, 255, 255, 0.08)" }}
+                  transition={{ duration: 0.15 }}
+                  style={{ height: 3, flex: 1, borderRadius: 2 }}
+                />
+              ))}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, color: barColor, minWidth: 32 }}>{strengthLabel}</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {checks.map((c) => (
+              <span
+                key={c.label}
+                style={{
+                  fontSize: 10, padding: "2px 7px", borderRadius: 20,
+                  border: "1px solid",
+                  borderColor: c.ok ? "#00B4D8" : "rgba(255, 255, 255, 0.08)",
+                  background: c.ok ? "rgba(0,180,216,0.08)" : "transparent",
+                  color: c.ok ? "#00B4D8" : "#94a3b8",
+                  fontWeight: 600,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {c.ok ? "✓ " : ""}{c.label}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -220,17 +319,20 @@ function Field({ label, icon, type = "text", value, onChange, placeholder, hasEr
       <label className="lp-label">{label}</label>
       <div style={{ position: "relative" }}>
         <span className="lp-input-icon">{icon}</span>
-        <input
+        <motion.input
           type={type} value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           autoComplete="off"
           className={`lp-input${hasError ? " err" : ""}`}
+          animate={{
+            borderColor: hasError ? "#ef4444" : focused ? "#00b8d4" : "rgba(255,255,255,0.08)",
+            boxShadow: focused ? "0 0 0 3px rgba(0,184,212,0.15)" : hasError ? "0 0 0 3px rgba(239,68,68,0.15)" : "none",
+          }}
+          transition={{ duration: 0.12 }}
           style={{
             paddingRight: rightSlot ? 34 : 12,
-            borderColor: hasError ? "#ef4444" : focused ? "#00B4D8" : "#E2EEF9",
-            boxShadow: focused ? "0 0 0 3px rgba(0,180,216,0.10)" : hasError ? "0 0 0 3px rgba(239,68,68,0.10)" : "none",
           }}
         />
         {rightSlot && (
@@ -291,7 +393,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   };
 
   const passwordsMatch     = confirm.length > 0 && password === confirm;
-  const confirmBorderColor = confirm.length === 0 ? "#E2EEF9" : passwordsMatch ? "#86efac" : "#fca5a5";
+  const confirmBorderColor = confirm.length === 0 ? "rgba(255, 255, 255, 0.08)" : passwordsMatch ? "#86efac" : "#fca5a5";
   const strengthScore      = getStrengthScore(password);
   const passwordValid      = strengthScore === 4;
 
@@ -437,7 +539,14 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   };
 
   return (
-    <div className="lp-root" onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="lp-root"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
+    >
       <style>{`
         .lp-root {
           position: fixed;
@@ -451,10 +560,8 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           background: rgba(4, 11, 22, 0.85);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          animation: lp-overlay-in 0.2s ease both;
           box-sizing: border-box;
         }
-        @keyframes lp-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 
         .lp-card {
           width: 100%;
@@ -468,17 +575,12 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           box-shadow: 0 24px 64px rgba(6, 13, 26, 0.6), inset 0 1px 1px rgba(255,255,255,0.1);
           position: relative;
           z-index: 1;
-          animation: lp-rise 0.35s cubic-bezier(0.22,1,0.36,1) both;
           display: flex;
           flex-direction: column;
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
         .lp-card::-webkit-scrollbar { display: none; }
-        @keyframes lp-rise {
-          from { opacity: 0; transform: translateY(16px) scale(0.98); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
 
         .lp-header {
           background: linear-gradient(135deg, rgba(0,180,216,0.1) 0%, rgba(13,34,68,0.2) 100%);
@@ -486,6 +588,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           padding: 24px 24px 18px;
           position: relative;
           flex-shrink: 0;
+          z-index: 1;
         }
         .lp-accent-bar {
           position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
@@ -520,6 +623,8 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
         .lp-body {
           padding: 20px 24px 28px;
           flex: 1;
+          position: relative;
+          z-index: 1;
         }
         .lp-form-card {
           background: transparent;
@@ -573,20 +678,18 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           color: white; border: none; border-radius: 10px;
           font-size: 14px; font-weight: 800; cursor: pointer;
           display: flex; align-items: center; justify-content: center; gap: 7px;
-          transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
           margin-top: 18px;
           box-shadow: 0 4px 20px rgba(0,184,212,0.3);
           letter-spacing: 0.01em;
           -webkit-appearance: none;
+          overflow: hidden;
         }
-        .lp-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,184,212,0.45); }
-        .lp-submit:active:not(:disabled) { transform: translateY(0); }
-        .lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .lp-toggle { text-align: center; margin-top: 16px; }
         .lp-toggle-btn {
           background: none; border: none; font-size: 12.5px; font-weight: 600;
           color: #94a3b8; cursor: pointer; padding: 4px 0; line-height: 1.4;
+          width: 100%; display: flex; align-items: center; justify-content: center;
         }
         .lp-toggle-btn:hover { color: white; }
         .lp-toggle-btn span { color: #00b8d4; }
@@ -618,7 +721,43 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
         }
       `}</style>
 
-      <div className="lp-card">
+      <motion.div
+        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 15, scale: 0.98 }}
+        transition={{ type: "spring", damping: 30, stiffness: 380 }}
+        className="lp-card"
+      >
+        {/* Modern static ambient glow effects — highly lightweight (no JS repaint loops) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-20%",
+            left: "-20%",
+            width: "60%",
+            height: "60%",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(0, 184, 212, 0.1) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+            zIndex: 0
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-20%",
+            right: "-20%",
+            width: "60%",
+            height: "60%",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(13, 148, 136, 0.06) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+            zIndex: 0
+          }}
+        />
+
         {/* ── Header ── */}
         <div className="lp-header">
           <div className="lp-logo-row">
@@ -627,15 +766,34 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             </div>
             <span className="lp-logo-name">Trust<span>Layer</span></span>
           </div>
-          <h1 className="lp-title">{isSignUp ? "Create Your Account" : "Welcome Back"}</h1>
-          <p className="lp-sub">
-            {isSignUp ? "Sign up to get started with TrustLayer" : "Sign in to access your dashboard"}
-          </p>
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isSignUp ? "signup-header" : "signin-header"}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.12 }}
+            >
+              <h1 className="lp-title">{isSignUp ? "Create Your Account" : "Welcome Back"}</h1>
+              <p className="lp-sub">
+                {isSignUp ? "Sign up to get started with TrustLayer" : "Sign in to access your dashboard"}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
           <div className="lp-accent-bar" />
           {onClose && (
-            <button className="lp-close-btn" onClick={onClose} type="button" aria-label="Close">
+            <motion.button
+              whileHover={{ scale: 1.05, rotate: 90 }}
+              whileTap={{ scale: 0.95 }}
+              className="lp-close-btn"
+              onClick={onClose}
+              type="button"
+              aria-label="Close"
+            >
               <X size={13} />
-            </button>
+            </motion.button>
           )}
         </div>
 
@@ -643,188 +801,11 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
         <div className="lp-body">
           <div className="lp-form-card">
             {/* Account Created Success Banner */}
-            {accountCreated && (
-              <div
-                style={{
-                  background: "rgba(22,163,74,0.1)",
-                  border: "1.5px solid rgba(22,163,74,0.3)",
-                  borderRadius: 10,
-                  padding: "10px 14px",
-                  marginBottom: 14,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "rgba(22,163,74,0.2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 8 8" fill="none">
-                    <path
-                      d="M1.5 4L3.5 6L6.5 2"
-                      stroke="#4ade80"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "#4ade80" }}>
-                    Account created successfully!
-                  </p>
-                  <p style={{ margin: 0, fontSize: 11.5, color: "#86efac" }}>
-                    Please sign in to continue
-                  </p>
-                </div>
-              </div>
-            )}
+            <AccountCreatedBanner active={accountCreated} />
 
             {/* Error & Validation Banners */}
-            {errorMessage && (
-              <div
-                style={{
-                  background: "rgba(220,38,38,0.1)",
-                  border: "1.5px solid rgba(220,38,38,0.25)",
-                  borderRadius: 10,
-                  padding: "10px 12px",
-                  marginBottom: 14,
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "rgba(220,38,38,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    marginTop: 1,
-                  }}
-                >
-                  <AlertCircle size={14} color="#f87171" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      color: "#f87171",
-                    }}
-                  >
-                    Something went wrong
-                  </p>
-                  <p
-                    style={{
-                      margin: "2px 0 0 0",
-                      fontSize: 11.5,
-                      color: "#fca5a5",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    {errorMessage}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setErrorMessage("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#fca5a5",
-                    padding: 2,
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            )}
-
-            {validationMessage && (
-              <div
-                style={{
-                  background: "rgba(245,158,11,0.1)",
-                  border: "1.5px solid rgba(245,158,11,0.25)",
-                  borderRadius: 10,
-                  padding: "10px 12px",
-                  marginBottom: 14,
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    background: "rgba(245,158,11,0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    marginTop: 1,
-                  }}
-                >
-                  <AlertCircle size={14} color="#fbbf24" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      color: "#fbbf24",
-                    }}
-                  >
-                    Check your details
-                  </p>
-                  <p
-                    style={{
-                      margin: "2px 0 0 0",
-                      fontSize: 11.5,
-                      color: "#fde047",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    {validationMessage}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setValidationMessage("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#fde047",
-                    padding: 2,
-                    flexShrink: 0,
-                    lineHeight: 1,
-                  }}
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            )}
+            <ErrorBanner message={errorMessage} onDismiss={() => setErrorMessage("")} />
+            <ValidationBanner message={validationMessage} onDismiss={() => setValidationMessage("")} />
 
             <p className="lp-hint">Enter your credentials to continue</p>
 
@@ -833,15 +814,27 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
               <input type="password" style={{ display: "none" }} autoComplete="current-password" readOnly />
 
               {/* Name — signup only */}
-              {isSignUp && (
-                <Field
-                  label="Full Name"
-                  icon={<User size={13} />}
-                  value={name}
-                  onChange={(v) => { setName(v); clearErrors(); }}
-                  placeholder="Your full name"
-                />
-              )}
+              <AnimatePresence initial={false}>
+                {isSignUp && (
+                  <motion.div
+                    key="name-field"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    <Field
+                      label="Full Name"
+                      icon={<User size={13} />}
+                      value={name}
+                      onChange={(v) => { setName(v); clearErrors(); }}
+                      placeholder="Your full name"
+                      noMargin
+                    />
+                    <div style={{ height: 10 }} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Email */}
               <Field
@@ -868,72 +861,141 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
               />
 
               {/* Forgot password — login only */}
-              {!isSignUp && (
-                <div className="lp-forgot-row">
-                  <button type="button" className="lp-forgot-link" onClick={() => onForgotPassword?.()}>
-                    Forgot password?
-                  </button>
-                </div>
-              )}
+              <AnimatePresence>
+                {!isSignUp && (
+                  <motion.div
+                    key="forgot-password"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="lp-forgot-row"
+                  >
+                    <button type="button" className="lp-forgot-link" onClick={() => onForgotPassword?.()}>
+                      Forgot password?
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Strength meter — signup only */}
               {isSignUp && <PasswordStrength password={password} />}
 
               {/* Confirm password — signup only */}
-              {isSignUp && (
-                <div className="lp-confirm-block">
-                  <label className="lp-label">Confirm Password</label>
-                  <div style={{ position: "relative" }}>
-                    <span className="lp-input-icon"><Lock size={13} /></span>
-                    <input
-                      type={showConfirm ? "text" : "password"}
-                      value={confirm}
-                      onChange={(e) => { setConfirm(e.target.value); clearErrors(); }}
-                      placeholder="Repeat password"
-                      autoComplete="new-password"
-                      className="lp-input"
-                      style={{
-                        paddingRight: 34,
-                        borderColor: confirmBorderColor,
-                        boxShadow: confirm.length > 0
-                          ? `0 0 0 3px ${passwordsMatch ? "rgba(134,239,172,0.2)" : "rgba(252,165,165,0.2)"}`
-                          : "none",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((v) => !v)}
-                      className="lp-eye-btn"
-                      style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}
-                    >
-                      {showConfirm ? <EyeOff size={13} /> : <Eye size={13} />}
-                    </button>
-                  </div>
-                  {confirm.length > 0 && (
-                    <p className="lp-match-msg" style={{ color: passwordsMatch ? "#16a34a" : "#dc2626" }}>
-                      {passwordsMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
-                    </p>
-                  )}
-                </div>
-              )}
+              <AnimatePresence>
+                {isSignUp && (
+                  <motion.div
+                    key="confirm-password"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="lp-confirm-block"
+                  >
+                    <label className="lp-label">Confirm Password</label>
+                    <div style={{ position: "relative" }}>
+                      <span className="lp-input-icon"><Lock size={13} /></span>
+                      <motion.input
+                        type={showConfirm ? "text" : "password"}
+                        value={confirm}
+                        onChange={(e) => { setConfirm(e.target.value); clearErrors(); }}
+                        placeholder="Repeat password"
+                        autoComplete="new-password"
+                        className="lp-input"
+                        animate={{
+                          borderColor: confirmBorderColor,
+                          boxShadow: confirm.length > 0
+                            ? `0 0 0 3px ${passwordsMatch ? "rgba(134,239,172,0.2)" : "rgba(252,165,165,0.2)"}`
+                            : "none",
+                        }}
+                        transition={{ duration: 0.12 }}
+                        style={{
+                          paddingRight: 34,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm((v) => !v)}
+                        className="lp-eye-btn"
+                        style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}
+                      >
+                        {showConfirm ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                    {confirm.length > 0 && (
+                      <p className="lp-match-msg" style={{ color: passwordsMatch ? "#16a34a" : "#dc2626" }}>
+                        {passwordsMatch ? "✓ Passwords match" : "✗ Passwords do not match"}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Submit */}
-              <button type="submit" className="lp-submit" disabled={loading}>
-                {loading
-                  ? <><div className="lp-spinner" />Processing…</>
-                  : <><ShieldCheck style={{ width: 15, height: 15 }} />{isSignUp ? "Create Account" : "Sign In"}</>
-                }
-              </button>
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                type="submit"
+                className="lp-submit"
+                disabled={loading}
+              >
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0, y: 3 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -3 }}
+                      transition={{ duration: 0.1 }}
+                      style={{ display: "flex", alignItems: "center", gap: 7 }}
+                    >
+                      <div className="lp-spinner" />
+                      Processing…
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="idle"
+                      initial={{ opacity: 0, y: 3 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -3 }}
+                      transition={{ duration: 0.1 }}
+                      style={{ display: "flex", alignItems: "center", gap: 7 }}
+                    >
+                      <ShieldCheck style={{ width: 15, height: 15 }} />
+                      {isSignUp ? "Create Account" : "Sign In"}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </form>
           </div>
 
           {/* Toggle */}
           <div className="lp-toggle">
             <button type="button" onClick={() => resetAndToggle(!isSignUp)} className="lp-toggle-btn">
-              {isSignUp
-                ? <>Already have an account? <span>Sign in</span></>
-                : <>Don't have an account? <span>Sign up</span></>
-              }
+              <AnimatePresence mode="wait">
+                {isSignUp ? (
+                  <motion.span
+                    key="signin-toggle"
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 3 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    Already have an account? <span style={{ color: "#00b8d4" }}>Sign in</span>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="signup-toggle"
+                    initial={{ opacity: 0, y: -3 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 3 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    Don't have an account? <span style={{ color: "#00b8d4" }}>Sign up</span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           </div>
 
@@ -944,7 +1006,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             <div className="lp-trust-dot" />
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
