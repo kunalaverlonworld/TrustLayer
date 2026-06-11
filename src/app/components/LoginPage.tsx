@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X, AlertCircle } from "lucide-react";
+import { Mail, Lock, ShieldCheck, User, Eye, EyeOff, X, AlertCircle, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   lmsLogin,
@@ -366,6 +366,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
   const [password, setPassword]         = useState("");
   const [confirm, setConfirm]           = useState("");
   const [name, setName]                 = useState("");
+  const [companyName, setCompanyName]   = useState("");
   const [isSignUp, setIsSignUp]         = useState(false);
   const [loading, setLoading]           = useState(false);
   const [hasError, setHasError]         = useState(false);
@@ -386,6 +387,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
     setPassword("");
     setConfirm("");
     setName("");
+    setCompanyName("");
     setShowPw(false);
     setShowConfirm(false);
     setAccountCreated(false);
@@ -449,7 +451,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
     e.preventDefault();
     clearErrors();
 
-    if (!email || !password || (isSignUp && !name)) {
+    if (!email || !password || (isSignUp && (!name || !companyName))) {
       setValidationMessage("Please fill in all fields.");
       return;
     }
@@ -473,6 +475,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             name,
             email,
             password,
+            companyName,
           });
 
           const user = {
@@ -480,6 +483,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
             email,
             source: "trustlayer",
             customerId: authUser._id,
+            companyName: companyName,
           };
 
           localStorage.setItem("user", JSON.stringify(user));
@@ -513,6 +517,7 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
           email: authUser.email || email,
           source: "trustlayer",
           customerId: authUser._id,
+          companyName: authUser.companyName || "",
         };
 
         localStorage.setItem("user", JSON.stringify(user));
@@ -829,6 +834,29 @@ export default function LoginPage({ onForgotPassword, onClose, onLoginSuccess }:
                       value={name}
                       onChange={(v) => { setName(v); clearErrors(); }}
                       placeholder="Your full name"
+                      noMargin
+                    />
+                    <div style={{ height: 10 }} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Company Name — signup only */}
+              <AnimatePresence initial={false}>
+                {isSignUp && (
+                  <motion.div
+                    key="company-field"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    <Field
+                      label="Company Name"
+                      icon={<Building2 size={13} />}
+                      value={companyName}
+                      onChange={(v) => { setCompanyName(v); clearErrors(); }}
+                      placeholder="Your company name"
                       noMargin
                     />
                     <div style={{ height: 10 }} />

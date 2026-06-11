@@ -167,6 +167,7 @@ export default function App() {
           name:          lsUser.name || '',
           email:         lsUser.email || '',
           token:         '',
+          companyName:   lsUser.companyName || '',
           activeLicense: loadSavedPlan(),   // restore plan from localStorage backup
         };
         // Persist to sessionStorage so future calls to loadSession() work

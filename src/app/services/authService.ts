@@ -8,6 +8,7 @@ export interface AuthUser {
   name: string;
   email: string;
   token: string;
+  companyName?: string;
   activeLicense?: {
     licenseType: string;
     planName: string;
@@ -23,6 +24,7 @@ export interface RegisterPayload {
   name: string;
   email: string;
   password: string;
+  companyName: string;
 }
 
 // ── Login via LMS proxy ────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ export async function lmsLogin(payload: LoginPayload): Promise<AuthUser> {
     name:          customer?.name ?? '',
     email:         customer?.email ?? '',
     token:         '',
+    companyName:   customer?.companyName ?? '',
     activeLicense: null,
   };
 
@@ -77,10 +80,11 @@ export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name:     payload.name,
-        email:    payload.email,
-        source:   'trustlayer',
-        password: payload.password,
+        name:        payload.name,
+        email:       payload.email,
+        source:      'trustlayer',
+        password:    payload.password,
+        companyName: payload.companyName,
       }),
     });
   } catch (networkErr) {
@@ -93,7 +97,9 @@ export async function lmsRegister(payload: RegisterPayload): Promise<AuthUser> {
   }
 
   // Auto-login immediately after successful registration
-  return lmsLogin({ email: payload.email, password: payload.password });
+  const loginUser = await lmsLogin({ email: payload.email, password: payload.password });
+  loginUser.companyName = payload.companyName;
+  return loginUser;
 }
 
 // ── Get user's current active license ────────────────────────────────────────
@@ -172,6 +178,7 @@ export async function triggerSSORedirect(user: AuthUser): Promise<void> {
         name: user.name,
         planName: activePlan,
         licenseId: licenseId,
+        companyName: user.companyName,
       }),
     });
 
